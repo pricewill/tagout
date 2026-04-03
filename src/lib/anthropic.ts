@@ -22,11 +22,10 @@ export async function identifySpeciesFromUrl(
         content: [
           {
             type: "image",
-source: {
-  type: "base64",
-  media_type: "image/jpeg",
-  data: imageUrl,
-},
+            source: {
+              type: "base64" as const,
+              media_type: "image/jpeg" as const,
+              data: imageUrl,
             },
           },
           {
