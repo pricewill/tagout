@@ -1,0 +1,3 @@
+NEXT_PUBLIC_SUPABASE_URL=https://olupxjikhhxajewauceh.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_secret_8dyEJXCmt_58-U9qfuRPIQ_S7YLQz3g
+ANTHROPIC_API_KEY=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
