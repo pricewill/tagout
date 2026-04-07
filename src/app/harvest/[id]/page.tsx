@@ -5,7 +5,7 @@ import { SpeciesBadge } from '@/components/SpeciesBadge'
 
 type SpeciesType = 'FISH' | 'BIG_GAME' | 'BIRD' | 'OTHER'
 
-interface MockHarvest {
+interface Harvest {
   id: string
   imageUrl: string
   species: string
@@ -49,45 +49,9 @@ interface MockHarvest {
   comments: { id: string; username: string; body: string; created_at: string }[]
 }
 
-const MOCK_HARVEST: MockHarvest = {
-  id: '1',
-  imageUrl: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200',
-  species: 'Cutthroat Trout',
-  species_type: 'FISH',
-  method: 'Fly fishing — dry fly',
-  location_label: 'Snake River, WY',
-  state: 'Wyoming',
-  harvested_at: '2024-09-14',
-  weight_lbs: 4.2,
-  length_in: 22,
-  caption: 'Finally landed this beauty after a full morning on the water. The hatch was incredible — PMDs everywhere. Released her after the photo.',
-  ai_id_result: 'Cutthroat Trout',
-  ai_id_confidence: 0.97,
-  scientific_name: 'Oncorhynchus clarkii',
-  like_count: 34,
-  comment_count: 2,
-  video_url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-  // general
-  companions: 'Solo',
-  land_type: 'PUBLIC',
-  weather: 'SUNNY',
-  moon_phase: 'WAXING_GIBBOUS',
-  time_of_day: 'MORNING',
-  personal_best: true,
-  harvest_success: true,
-  // fishing-specific
-  fly_pattern: 'PMD Parachute #16',
-  water_type: 'RIVER',
-  technique: 'DRY_FLY',
-  catch_release: true,
-  fish_count: 4,
-  water_conditions: 'CLEAR',
-  user: { username: 'rivers_edge', display_name: 'Jake Rivers', avatar_url: null },
-  comments: [
-    { id: 'c1', username: 'mt_fly_fisher', body: 'That red slash is gorgeous! What fly were you throwing?', created_at: '2024-09-14T16:30:00Z' },
-    { id: 'c2', username: 'lone_star_hunter', body: 'Incredible fish. The Snake is on my bucket list.', created_at: '2024-09-14T18:00:00Z' },
-  ],
-}
+// TODO: replace with real data fetch once Supabase/Prisma is wired up:
+// const harvest = await prisma.harvest.findUnique({ where: { id: params.id }, include: { user: true, images: true, comments: { include: { user: true } }, ... } })
+const harvest: Harvest | null = null
 
 // ─── video embed helpers ───────────────────────────────────────────────────────
 function getVideoEmbed(url: string): { type: 'iframe'; src: string } | { type: 'link'; host: string } | null {
@@ -191,11 +155,34 @@ const PeopleIcon = <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" f
 
 // ─── page ─────────────────────────────────────────────────────────────────────
 export default function HarvestDetailPage() {
-  const h = MOCK_HARVEST
+  const h = harvest
   const [liked, setLiked] = useState(false)
-  const [likeCount, setLikeCount] = useState(h.like_count)
+  const [likeCount, setLikeCount] = useState(h?.like_count ?? 0)
   const [comment, setComment] = useState('')
-  const [comments, setComments] = useState(h.comments)
+  const [comments, setComments] = useState(h?.comments ?? [])
+
+  if (!h) {
+    return (
+      <main className="min-h-screen bg-[#0d1a0d] text-white">
+        <header className="sticky top-0 z-10 bg-[#0d1a0d]/95 backdrop-blur border-b border-[#2D4A2D] px-4 py-3 flex items-center gap-4">
+          <a href="/feed" className="text-[#8aaa8a] hover:text-white transition-colors">← Feed</a>
+          <h1 className="text-lg font-semibold text-[#8aaa8a]">Harvest</h1>
+        </header>
+        <div className="flex flex-col items-center justify-center py-32 text-center px-4">
+          <div className="h-16 w-16 rounded-full bg-[#1a2a1a] border border-[#2D4A2D] flex items-center justify-center mb-5">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-[#3a5a3a]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-bold text-[#c8d8c8] mb-2">Harvest not found</h3>
+          <p className="text-[#6a8a6a] text-sm mb-6 max-w-xs">
+            This post doesn&apos;t exist or may have been removed.
+          </p>
+          <a href="/feed" className="text-[#C17F24] text-sm hover:underline">← Back to Feed</a>
+        </div>
+      </main>
+    )
+  }
 
   const isHunting = h.species_type === 'BIG_GAME' || h.species_type === 'BIRD'
   const isFishing = h.species_type === 'FISH'

@@ -24,12 +24,34 @@ interface FormData {
   species_type: string;
   method: string;
   location_label: string;
-  lat: string;
-  lng: string;
+  state: string;
   weight_lbs: string;
   length_in: string;
   caption: string;
   harvested_at: string;
+  // general
+  companions: string;
+  land_type: string;
+  weather: string;
+  moon_phase: string;
+  time_of_day: string;
+  personal_best: boolean;
+  harvest_success: boolean;
+  video_url: string;
+  // hunting-specific
+  shot_distance_yards: string;
+  season_type: string;
+  tag_type: string;
+  animal_age: string;
+  point_count: string;
+  score: string;
+  // fishing-specific
+  fly_pattern: string;
+  water_type: string;
+  technique: string;
+  catch_release: boolean;
+  fish_count: string;
+  water_conditions: string;
 }
 
 export function NewHarvestForm({ userId }: { userId: string }) {
@@ -42,12 +64,34 @@ export function NewHarvestForm({ userId }: { userId: string }) {
     species_type: "FISH",
     method: "",
     location_label: "",
-    lat: "",
-    lng: "",
+    state: "",
     weight_lbs: "",
     length_in: "",
     caption: "",
     harvested_at: new Date().toISOString().slice(0, 16),
+    // general
+    companions: "",
+    land_type: "",
+    weather: "",
+    moon_phase: "",
+    time_of_day: "",
+    personal_best: false,
+    harvest_success: true,
+    video_url: "",
+    // hunting-specific
+    shot_distance_yards: "",
+    season_type: "",
+    tag_type: "",
+    animal_age: "",
+    point_count: "",
+    score: "",
+    // fishing-specific
+    fly_pattern: "",
+    water_type: "",
+    technique: "",
+    catch_release: false,
+    fish_count: "",
+    water_conditions: "",
   });
   const [aiResult, setAiResult] = useState<{
     species: string;
@@ -133,12 +177,34 @@ export function NewHarvestForm({ userId }: { userId: string }) {
       fd.append("species_type", form.species_type);
       fd.append("method", form.method);
       fd.append("location_label", form.location_label);
-      if (form.lat) fd.append("lat", form.lat);
-      if (form.lng) fd.append("lng", form.lng);
+      if (form.state) fd.append("state", form.state);
       if (form.weight_lbs) fd.append("weight_lbs", form.weight_lbs);
       if (form.length_in) fd.append("length_in", form.length_in);
       if (form.caption) fd.append("caption", form.caption);
       fd.append("harvested_at", new Date(form.harvested_at).toISOString());
+      // general
+      if (form.companions) fd.append("companions", form.companions);
+      if (form.land_type) fd.append("land_type", form.land_type);
+      if (form.weather) fd.append("weather", form.weather);
+      if (form.moon_phase) fd.append("moon_phase", form.moon_phase);
+      if (form.time_of_day) fd.append("time_of_day", form.time_of_day);
+      fd.append("personal_best", String(form.personal_best));
+      fd.append("harvest_success", String(form.harvest_success));
+      if (form.video_url) fd.append("video_url", form.video_url);
+      // hunting-specific
+      if (form.shot_distance_yards) fd.append("shot_distance_yards", form.shot_distance_yards);
+      if (form.season_type) fd.append("season_type", form.season_type);
+      if (form.tag_type) fd.append("tag_type", form.tag_type);
+      if (form.animal_age) fd.append("animal_age", form.animal_age);
+      if (form.point_count) fd.append("point_count", form.point_count);
+      if (form.score) fd.append("score", form.score);
+      // fishing-specific
+      if (form.fly_pattern) fd.append("fly_pattern", form.fly_pattern);
+      if (form.water_type) fd.append("water_type", form.water_type);
+      if (form.technique) fd.append("technique", form.technique);
+      fd.append("catch_release", String(form.catch_release));
+      if (form.fish_count) fd.append("fish_count", form.fish_count);
+      if (form.water_conditions) fd.append("water_conditions", form.water_conditions);
 
       for (const img of images) {
         fd.append("images", img.file);
@@ -402,6 +468,200 @@ export function NewHarvestForm({ userId }: { userId: string }) {
                 onChange={(e) => updateForm("harvested_at", e.target.value)}
                 className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500 [color-scheme:dark]"
               />
+            </div>
+
+            {/* ── General conditions ── */}
+            <div className="col-span-2 border-t border-slate-700 pt-4 mt-1">
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">Conditions (optional)</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">State</label>
+                  <input type="text" value={form.state} onChange={(e) => updateForm("state", e.target.value)}
+                    placeholder="e.g. Wyoming" className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500 text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Land Type</label>
+                  <select value={form.land_type} onChange={(e) => updateForm("land_type", e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-500 text-sm">
+                    <option value="">— optional —</option>
+                    <option value="PUBLIC">Public</option>
+                    <option value="PRIVATE">Private</option>
+                    <option value="UNKNOWN">Unknown</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Time of Day</label>
+                  <select value={form.time_of_day} onChange={(e) => updateForm("time_of_day", e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-500 text-sm">
+                    <option value="">— optional —</option>
+                    <option value="MORNING">Morning</option>
+                    <option value="MIDDAY">Midday</option>
+                    <option value="EVENING">Evening</option>
+                    <option value="NIGHT">Night</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Weather</label>
+                  <select value={form.weather} onChange={(e) => updateForm("weather", e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-500 text-sm">
+                    <option value="">— optional —</option>
+                    <option value="SUNNY">Sunny</option>
+                    <option value="OVERCAST">Overcast</option>
+                    <option value="WIND">Windy</option>
+                    <option value="RAIN">Rain</option>
+                    <option value="SNOW">Snow</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Moon Phase</label>
+                  <select value={form.moon_phase} onChange={(e) => updateForm("moon_phase", e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-500 text-sm">
+                    <option value="">— optional —</option>
+                    {["NEW","WAXING_CRESCENT","FIRST_QUARTER","WAXING_GIBBOUS","FULL","WANING_GIBBOUS","LAST_QUARTER","WANING_CRESCENT"].map(p => (
+                      <option key={p} value={p}>{p.replace(/_/g, " ")}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Companions</label>
+                  <input type="text" value={form.companions} onChange={(e) => updateForm("companions", e.target.value)}
+                    placeholder="Solo, or names…" className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500 text-sm" />
+                </div>
+                <div className="col-span-2 flex gap-5">
+                  <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-300">
+                    <input type="checkbox" checked={form.personal_best} onChange={(e) => updateForm("personal_best", e.target.checked as any)}
+                      className="h-4 w-4 rounded border-slate-600 bg-slate-800 accent-amber-500" />
+                    Personal best
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-300">
+                    <input type="checkbox" checked={form.harvest_success} onChange={(e) => updateForm("harvest_success", e.target.checked as any)}
+                      className="h-4 w-4 rounded border-slate-600 bg-slate-800 accent-amber-500" />
+                    Successful harvest
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Hunting-specific (BIG_GAME | BIRD) ── */}
+            {(form.species_type === "BIG_GAME" || form.species_type === "BIRD") && (
+              <div className="col-span-2 bg-slate-800/40 border border-slate-700 rounded-xl p-4">
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">🦌 Hunting Details</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">Season Type</label>
+                    <select value={form.season_type} onChange={(e) => updateForm("season_type", e.target.value)}
+                      className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-500 text-sm">
+                      <option value="">— optional —</option>
+                      <option value="ARCHERY">Archery</option>
+                      <option value="MUZZLELOADER">Muzzleloader</option>
+                      <option value="RIFLE">Rifle</option>
+                      <option value="GENERAL">General</option>
+                      <option value="SHOTGUN">Shotgun</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">Tag Type</label>
+                    <select value={form.tag_type} onChange={(e) => updateForm("tag_type", e.target.value)}
+                      className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-500 text-sm">
+                      <option value="">— optional —</option>
+                      <option value="GENERAL">General</option>
+                      <option value="LIMITED_ENTRY">Limited Entry</option>
+                      <option value="OTC">Over the Counter</option>
+                      <option value="PRIVATE">Private</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">Animal Age</label>
+                    <select value={form.animal_age} onChange={(e) => updateForm("animal_age", e.target.value)}
+                      className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-500 text-sm">
+                      <option value="">— optional —</option>
+                      <option value="MATURE">Mature</option>
+                      <option value="YOUNG">Young</option>
+                      <option value="UNKNOWN">Unknown</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">Shot Distance (yds)</label>
+                    <input type="number" min="0" value={form.shot_distance_yards} onChange={(e) => updateForm("shot_distance_yards", e.target.value)}
+                      placeholder="0" className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500 text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">Point Count</label>
+                    <input type="number" min="0" value={form.point_count} onChange={(e) => updateForm("point_count", e.target.value)}
+                      placeholder="e.g. 6" className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500 text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">Score (B&C / P&Y)</label>
+                    <input type="number" min="0" step="0.1" value={form.score} onChange={(e) => updateForm("score", e.target.value)}
+                      placeholder="0.0" className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500 text-sm" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── Fishing-specific (FISH) ── */}
+            {form.species_type === "FISH" && (
+              <div className="col-span-2 bg-slate-800/40 border border-slate-700 rounded-xl p-4">
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">🎣 Fishing Details</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">Technique</label>
+                    <select value={form.technique} onChange={(e) => updateForm("technique", e.target.value)}
+                      className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-500 text-sm">
+                      <option value="">— optional —</option>
+                      {["DRY_FLY","NYMPH","STREAMER","SPIN","BAITCAST","TROLLING","ICE_FISHING","FLY"].map(t => (
+                        <option key={t} value={t}>{t.replace(/_/g, " ")}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">Water Type</label>
+                    <select value={form.water_type} onChange={(e) => updateForm("water_type", e.target.value)}
+                      className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-500 text-sm">
+                      <option value="">— optional —</option>
+                      {["RIVER","LAKE","RESERVOIR","STREAM","POND","BAY_ESTUARY","OCEAN_OFFSHORE","OCEAN_FLATS"].map(w => (
+                        <option key={w} value={w}>{w.replace(/_/g, " ")}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">Water Conditions</label>
+                    <select value={form.water_conditions} onChange={(e) => updateForm("water_conditions", e.target.value)}
+                      className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-500 text-sm">
+                      <option value="">— optional —</option>
+                      <option value="CLEAR">Clear</option>
+                      <option value="MURKY">Murky</option>
+                      <option value="HIGH">High</option>
+                      <option value="LOW">Low</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">Fly Pattern</label>
+                    <input type="text" value={form.fly_pattern} onChange={(e) => updateForm("fly_pattern", e.target.value)}
+                      placeholder="e.g. PMD #16" className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500 text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1">Fish Count</label>
+                    <input type="number" min="1" value={form.fish_count} onChange={(e) => updateForm("fish_count", e.target.value)}
+                      placeholder="1" className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500 text-sm" />
+                  </div>
+                  <div className="flex items-end pb-1">
+                    <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-300">
+                      <input type="checkbox" checked={form.catch_release} onChange={(e) => updateForm("catch_release", e.target.checked as any)}
+                        className="h-4 w-4 rounded border-slate-600 bg-slate-800 accent-amber-500" />
+                      Catch &amp; release
+                    </label>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── Video URL ── */}
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">Video URL (optional)</label>
+              <input type="url" value={form.video_url} onChange={(e) => updateForm("video_url", e.target.value)}
+                placeholder="YouTube, Vimeo, Instagram, or TikTok link"
+                className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500" />
             </div>
           </div>
         </div>
