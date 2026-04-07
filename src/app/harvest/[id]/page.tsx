@@ -1,156 +1,370 @@
-import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
-import { createClient } from "@/lib/supabase/server";
-import { ImageCarousel } from "@/components/ImageCarousel";
-import { SpeciesBadge } from "@/components/ui/SpeciesBadge";
-import { Avatar } from "@/components/ui/Avatar";
-import { LikeButton } from "@/components/LikeButton";
-import { CommentSection } from "./CommentSection";
-import Link from "next/link";
-import { MapPin, Scale, Ruler, Calendar, Crosshair, Sparkles } from "lucide-react";
-import { format } from "date-fns";
-import { formatWeight, formatLength } from "@/lib/utils";
+'use client'
 
-interface HarvestPageProps {
-  params: Promise<{ id: string }>;
+import { useState } from 'react'
+import { SpeciesBadge } from '@/components/SpeciesBadge'
+
+type SpeciesType = 'FISH' | 'BIG_GAME' | 'BIRD' | 'OTHER'
+
+interface MockHarvest {
+  id: string
+  imageUrl: string
+  species: string
+  species_type: SpeciesType
+  method: string
+  location_label: string
+  state?: string
+  harvested_at: string
+  weight_lbs?: number
+  length_in?: number
+  caption?: string
+  ai_id_result?: string
+  ai_id_confidence?: number
+  scientific_name?: string
+  like_count: number
+  comment_count: number
+  video_url?: string
+  // general
+  companions?: string
+  land_type?: string
+  weather?: string
+  moon_phase?: string
+  time_of_day?: string
+  personal_best?: boolean
+  harvest_success?: boolean
+  // hunting
+  season_type?: string
+  tag_type?: string
+  animal_age?: string
+  shot_distance_yards?: number
+  point_count?: number
+  score?: number
+  // fishing
+  fly_pattern?: string
+  water_type?: string
+  technique?: string
+  catch_release?: boolean
+  fish_count?: number
+  water_conditions?: string
+  user: { username: string; display_name: string; avatar_url: string | null }
+  comments: { id: string; username: string; body: string; created_at: string }[]
 }
 
-export default async function HarvestPage({ params }: HarvestPageProps) {
-  const { id } = await params;
+const MOCK_HARVEST: MockHarvest = {
+  id: '1',
+  imageUrl: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200',
+  species: 'Cutthroat Trout',
+  species_type: 'FISH',
+  method: 'Fly fishing — dry fly',
+  location_label: 'Snake River, WY',
+  state: 'Wyoming',
+  harvested_at: '2024-09-14',
+  weight_lbs: 4.2,
+  length_in: 22,
+  caption: 'Finally landed this beauty after a full morning on the water. The hatch was incredible — PMDs everywhere. Released her after the photo.',
+  ai_id_result: 'Cutthroat Trout',
+  ai_id_confidence: 0.97,
+  scientific_name: 'Oncorhynchus clarkii',
+  like_count: 34,
+  comment_count: 2,
+  video_url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+  // general
+  companions: 'Solo',
+  land_type: 'PUBLIC',
+  weather: 'SUNNY',
+  moon_phase: 'WAXING_GIBBOUS',
+  time_of_day: 'MORNING',
+  personal_best: true,
+  harvest_success: true,
+  // fishing-specific
+  fly_pattern: 'PMD Parachute #16',
+  water_type: 'RIVER',
+  technique: 'DRY_FLY',
+  catch_release: true,
+  fish_count: 4,
+  water_conditions: 'CLEAR',
+  user: { username: 'rivers_edge', display_name: 'Jake Rivers', avatar_url: null },
+  comments: [
+    { id: 'c1', username: 'mt_fly_fisher', body: 'That red slash is gorgeous! What fly were you throwing?', created_at: '2024-09-14T16:30:00Z' },
+    { id: 'c2', username: 'lone_star_hunter', body: 'Incredible fish. The Snake is on my bucket list.', created_at: '2024-09-14T18:00:00Z' },
+  ],
+}
 
-  const supabase = await createClient();
-  const { data: { user: authUser } } = await supabase.auth.getUser();
+// ─── video embed helpers ───────────────────────────────────────────────────────
+function getVideoEmbed(url: string): { type: 'iframe'; src: string } | { type: 'link'; host: string } | null {
+  try {
+    const u = new URL(url)
+    const host = u.hostname.replace('www.', '')
 
-  const harvest = await prisma.harvest.findUnique({
-    where: { id },
-    include: {
-      user: { select: { id: true, username: true, display_name: true, avatar_url: true } },
-      images: { orderBy: { display_order: "asc" } },
-      _count: { select: { likes: true, comments: true } },
-    },
-  });
+    if (host === 'youtube.com') {
+      const id = u.searchParams.get('v')
+      if (id) return { type: 'iframe', src: `https://www.youtube.com/embed/${id}` }
+    }
+    if (host === 'youtu.be') {
+      const id = u.pathname.slice(1)
+      if (id) return { type: 'iframe', src: `https://www.youtube.com/embed/${id}` }
+    }
+    if (host === 'vimeo.com') {
+      const id = u.pathname.replace(/^\//, '')
+      if (id) return { type: 'iframe', src: `https://player.vimeo.com/video/${id}` }
+    }
+    if (host === 'instagram.com' || host === 'tiktok.com') {
+      return { type: 'link', host: host === 'instagram.com' ? 'Instagram' : 'TikTok' }
+    }
+    return null
+  } catch {
+    return null
+  }
+}
 
-  if (!harvest) notFound();
+function VideoEmbed({ url }: { url: string }) {
+  const embed = getVideoEmbed(url)
+  if (!embed) return null
 
-  const [isLiked, comments] = await Promise.all([
-    authUser
-      ? prisma.like.findUnique({
-          where: { user_id_harvest_id: { user_id: authUser.id, harvest_id: id } },
-        }).then(Boolean)
-      : false,
-    prisma.comment.findMany({
-      where: { harvest_id: id },
-      orderBy: { created_at: "asc" },
-      include: {
-        user: { select: { username: true, display_name: true, avatar_url: true } },
-      },
-    }),
-  ]);
+  if (embed.type === 'iframe') {
+    return (
+      <div className="rounded-xl overflow-hidden border border-[#2D4A2D] bg-black aspect-video">
+        <iframe
+          src={embed.src}
+          className="w-full h-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          title="Harvest video"
+        />
+      </div>
+    )
+  }
+
+  // link-only (Instagram / TikTok)
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer"
+      className="flex items-center gap-3 rounded-xl border border-[#2D4A2D] bg-[#1a2a1a] px-4 py-3 hover:border-[#C17F24] transition-colors">
+      <div className="h-10 w-10 rounded-full bg-[#2D4A2D] flex items-center justify-center shrink-0">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#C17F24]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <div>
+        <div className="text-sm font-semibold text-white">Watch on {embed.host}</div>
+        <div className="text-xs text-[#6a8a6a] truncate max-w-[240px]">{url}</div>
+      </div>
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-[#6a8a6a] ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+      </svg>
+    </a>
+  )
+}
+
+// ─── small atoms ──────────────────────────────────────────────────────────────
+function fmt(val: string) { return val.replace(/_/g, ' ') }
+
+function Pill({ label }: { label: string }) {
+  return (
+    <span className="inline-flex items-center rounded-full bg-[#1a2a1a] border border-[#2D4A2D] px-2.5 py-0.5 text-xs text-[#8aaa8a]">
+      {fmt(label)}
+    </span>
+  )
+}
+
+function StatTile({ value, unit }: { value: string | number; unit: string }) {
+  return (
+    <div className="bg-[#1a2a1a] border border-[#2D4A2D] rounded-xl p-4 text-center">
+      <div className="text-2xl font-bold text-[#C17F24]">{value}</div>
+      <div className="text-xs text-[#8aaa8a] uppercase tracking-wide mt-1">{unit}</div>
+    </div>
+  )
+}
+
+function MetaRow({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-2 text-[#8aaa8a] text-sm">
+      <span className="text-[#4a6a4a] shrink-0">{icon}</span>
+      {children}
+    </div>
+  )
+}
+
+const PinIcon = <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+const CalIcon = <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+const ScaleIcon = <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" /></svg>
+const PeopleIcon = <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+
+// ─── page ─────────────────────────────────────────────────────────────────────
+export default function HarvestDetailPage() {
+  const h = MOCK_HARVEST
+  const [liked, setLiked] = useState(false)
+  const [likeCount, setLikeCount] = useState(h.like_count)
+  const [comment, setComment] = useState('')
+  const [comments, setComments] = useState(h.comments)
+
+  const isHunting = h.species_type === 'BIG_GAME' || h.species_type === 'BIRD'
+  const isFishing = h.species_type === 'FISH'
+
+  const toggleLike = () => {
+    setLiked((p) => !p)
+    setLikeCount((p) => (liked ? p - 1 : p + 1))
+  }
+
+  const submitComment = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!comment.trim()) return
+    setComments((p) => [...p, { id: `c${Date.now()}`, username: 'you', body: comment, created_at: new Date().toISOString() }])
+    setComment('')
+  }
 
   return (
-    <main className="max-w-3xl mx-auto px-4 py-6 space-y-6">
-      {/* Image carousel */}
-      <ImageCarousel
-        images={harvest.images.map((img) => ({ url: img.url }))}
-        aspectRatio="video"
-        className="rounded-xl overflow-hidden"
-      />
+    <main className="min-h-screen bg-[#0d1a0d] text-white">
+      <header className="sticky top-0 z-10 bg-[#0d1a0d]/95 backdrop-blur border-b border-[#2D4A2D] px-4 py-3 flex items-center gap-4">
+        <a href="/feed" className="text-[#8aaa8a] hover:text-white transition-colors">← Feed</a>
+        <h1 className="text-lg font-semibold">{h.species}</h1>
+      </header>
 
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <SpeciesBadge type={harvest.species_type} />
-          </div>
-          <h1 className="text-2xl font-bold text-white">{harvest.species}</h1>
-          <p className="text-slate-400">{harvest.method}</p>
-        </div>
-        <LikeButton
-          harvestId={harvest.id}
-          initialCount={harvest._count.likes}
-          initialLiked={isLiked as boolean}
-          userId={authUser?.id}
-        />
-      </div>
-
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatCard icon={<MapPin className="w-4 h-4" />} label="Location" value={harvest.location_label} />
-        <StatCard
-          icon={<Calendar className="w-4 h-4" />}
-          label="Harvested"
-          value={format(new Date(harvest.harvested_at), "MMM d, yyyy")}
-        />
-        {harvest.weight_lbs != null && (
-          <StatCard icon={<Scale className="w-4 h-4" />} label="Weight" value={formatWeight(harvest.weight_lbs)} />
-        )}
-        {harvest.length_in != null && (
-          <StatCard icon={<Ruler className="w-4 h-4" />} label="Length" value={formatLength(harvest.length_in)} />
-        )}
-      </div>
-
-      {/* AI ID result */}
-      {harvest.ai_id_result && harvest.ai_id_result !== "Unknown" && (
-        <div className="bg-forest-900/40 border border-forest-700/50 rounded-xl p-4 flex items-start gap-3">
-          <Sparkles className="w-5 h-5 text-forest-400 shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-semibold text-forest-300">AI Species ID</p>
-            <p className="text-forest-200">{harvest.ai_id_result}</p>
-            {harvest.ai_id_confidence != null && (
-              <p className="text-xs text-forest-500 mt-0.5">
-                {Math.round(harvest.ai_id_confidence * 100)}% confidence
-              </p>
+      <div className="max-w-2xl mx-auto">
+        {/* Hero */}
+        <div className="relative aspect-[4/3] bg-[#0f1a0f]">
+          <img src={h.imageUrl} alt={h.species} className="w-full h-full object-cover" />
+          <div className="absolute top-3 left-3 flex gap-2 flex-wrap">
+            {h.personal_best && (
+              <span className="bg-[#C17F24] text-[#0d1a0d] text-xs font-bold px-2.5 py-0.5 rounded-full">⭐ PB</span>
+            )}
+            {h.catch_release && (
+              <span className="bg-blue-800/80 text-blue-100 border border-blue-600 text-xs font-semibold px-2.5 py-0.5 rounded-full">C&R</span>
             )}
           </div>
         </div>
-      )}
 
-      {/* Caption */}
-      {harvest.caption && (
-        <div className="bg-slate-800/50 rounded-xl p-4">
-          <p className="text-slate-200 leading-relaxed">{harvest.caption}</p>
+        <div className="px-4 py-6 space-y-6">
+          {/* Title row */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-2xl font-bold">{h.species}</h2>
+                <SpeciesBadge species_type={h.species_type} />
+              </div>
+              {h.scientific_name && <p className="text-[#8aaa8a] text-sm italic">{h.scientific_name}</p>}
+            </div>
+            {h.ai_id_confidence && (
+              <div className="shrink-0 bg-[#1a2a1a] border border-[#2D4A2D] rounded-lg px-3 py-1.5 text-right">
+                <div className="text-[10px] text-[#6a8a6a] uppercase tracking-wider">AI ID</div>
+                <div className="text-sm font-semibold text-[#C17F24]">{Math.round(h.ai_id_confidence * 100)}%</div>
+              </div>
+            )}
+          </div>
+
+          {/* Measurement tiles */}
+          {(h.weight_lbs || h.length_in) && (
+            <div className="grid grid-cols-2 gap-3">
+              {h.weight_lbs && <StatTile value={h.weight_lbs} unit="Pounds" />}
+              {h.length_in && <StatTile value={`${h.length_in}"`} unit="Inches" />}
+            </div>
+          )}
+
+          {/* Core metadata */}
+          <div className="space-y-2">
+            <MetaRow icon={PinIcon}>
+              {h.location_label}{h.state ? `, ${h.state}` : ''} · <Pill label={h.land_type ?? 'UNKNOWN'} />
+            </MetaRow>
+            <MetaRow icon={CalIcon}>
+              {new Date(h.harvested_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+              {h.time_of_day && <> · <Pill label={h.time_of_day} /></>}
+            </MetaRow>
+            <MetaRow icon={ScaleIcon}>{h.method}</MetaRow>
+            {h.companions && <MetaRow icon={PeopleIcon}>{h.companions}</MetaRow>}
+          </div>
+
+          {/* Conditions */}
+          {(h.weather || h.moon_phase) && (
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-[#4a7a4a] mb-2">Conditions</p>
+              <div className="flex gap-2 flex-wrap">
+                {h.weather && <Pill label={h.weather} />}
+                {h.moon_phase && <Pill label={`🌙 ${h.moon_phase}`} />}
+              </div>
+            </div>
+          )}
+
+          {/* Hunting-specific */}
+          {isHunting && (h.season_type || h.tag_type || h.animal_age || h.shot_distance_yards || h.point_count || h.score) && (
+            <div className="rounded-xl border border-[#2D4A2D] bg-[#111f11] p-4 space-y-3">
+              <p className="text-xs font-bold uppercase tracking-widest text-[#4a7a4a]">🦌 Hunt Details</p>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                {h.season_type && <><span className="text-[#6a8a6a]">Season</span><span>{fmt(h.season_type)}</span></>}
+                {h.tag_type && <><span className="text-[#6a8a6a]">Tag</span><span>{fmt(h.tag_type)}</span></>}
+                {h.animal_age && <><span className="text-[#6a8a6a]">Age</span><span>{fmt(h.animal_age)}</span></>}
+                {h.shot_distance_yards != null && <><span className="text-[#6a8a6a]">Shot Distance</span><span>{h.shot_distance_yards} yds</span></>}
+                {h.point_count != null && <><span className="text-[#6a8a6a]">Points</span><span>{h.point_count}</span></>}
+                {h.score != null && <><span className="text-[#6a8a6a]">Score</span><span>{h.score}</span></>}
+              </div>
+            </div>
+          )}
+
+          {/* Fishing-specific */}
+          {isFishing && (h.technique || h.water_type || h.water_conditions || h.fly_pattern || h.fish_count || h.catch_release) && (
+            <div className="rounded-xl border border-[#2D4A2D] bg-[#111f11] p-4 space-y-3">
+              <p className="text-xs font-bold uppercase tracking-widest text-[#4a7a4a]">🎣 Fishing Details</p>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                {h.technique && <><span className="text-[#6a8a6a]">Technique</span><span>{fmt(h.technique)}</span></>}
+                {h.water_type && <><span className="text-[#6a8a6a]">Water</span><span>{fmt(h.water_type)}</span></>}
+                {h.water_conditions && <><span className="text-[#6a8a6a]">Conditions</span><span>{fmt(h.water_conditions)}</span></>}
+                {h.fly_pattern && <><span className="text-[#6a8a6a]">Fly Pattern</span><span>{h.fly_pattern}</span></>}
+                {h.fish_count != null && <><span className="text-[#6a8a6a]">Fish Count</span><span>{h.fish_count}</span></>}
+                {h.catch_release && <><span className="text-[#6a8a6a]">C&amp;R</span><span className="text-blue-400">Yes ✓</span></>}
+              </div>
+            </div>
+          )}
+
+          {/* Video embed */}
+          {h.video_url && <VideoEmbed url={h.video_url} />}
+
+          {/* Caption */}
+          {h.caption && (
+            <p className="text-[#c8d8c8] leading-relaxed border-l-2 border-[#2D4A2D] pl-4">{h.caption}</p>
+          )}
+
+          {/* Author */}
+          <a href={`/profile/${h.user.username}`}
+            className="flex items-center gap-3 bg-[#1a2a1a] border border-[#2D4A2D] rounded-xl p-3 hover:border-[#C17F24] transition-colors">
+            <div className="h-10 w-10 rounded-full bg-[#2D4A2D] flex items-center justify-center font-bold text-[#8aaa8a]">
+              {h.user.display_name[0]?.toUpperCase()}
+            </div>
+            <div>
+              <div className="font-semibold text-sm">{h.user.display_name}</div>
+              <div className="text-[#6a8a6a] text-xs">@{h.user.username}</div>
+            </div>
+          </a>
+
+          {/* Like */}
+          <button onClick={toggleLike}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-colors font-semibold text-sm
+              ${liked ? 'bg-red-900/40 border-red-700/60 text-red-400' : 'bg-[#1a2a1a] border-[#2D4A2D] text-[#8aaa8a] hover:border-red-700/60 hover:text-red-400'}`}>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill={liked ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+            {likeCount} {likeCount === 1 ? 'Like' : 'Likes'}
+          </button>
+
+          {/* Comments */}
+          <div className="space-y-4">
+            <h3 className="font-semibold text-[#c8d8c8]">Comments ({comments.length})</h3>
+            <div className="space-y-3">
+              {comments.map((c) => (
+                <div key={c.id} className="bg-[#1a2a1a] border border-[#2D4A2D] rounded-xl p-3">
+                  <div className="text-xs text-[#C17F24] font-semibold mb-1">@{c.username}</div>
+                  <p className="text-sm text-[#c8d8c8]">{c.body}</p>
+                </div>
+              ))}
+            </div>
+            <form onSubmit={submitComment} className="flex gap-2">
+              <input value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Add a comment…"
+                className="flex-1 bg-[#1a2a1a] border border-[#2D4A2D] rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-[#C17F24]" />
+              <button type="submit"
+                className="bg-[#C17F24] text-[#0d1a0d] px-4 py-2 rounded-xl font-semibold text-sm hover:bg-[#d4912a] transition-colors">
+                Post
+              </button>
+            </form>
+          </div>
         </div>
-      )}
-
-      {/* Hunter/angler info */}
-      <Link
-        href={`/profile/${harvest.user.username}`}
-        className="flex items-center gap-3 bg-slate-800/40 hover:bg-slate-700/40 border border-slate-700/50 rounded-xl p-4 transition-colors"
-      >
-        <Avatar src={harvest.user.avatar_url} alt={harvest.user.display_name} size="md" />
-        <div>
-          <p className="font-semibold text-white">{harvest.user.display_name}</p>
-          <p className="text-slate-400 text-sm">@{harvest.user.username}</p>
-        </div>
-        <Crosshair className="w-4 h-4 text-amber-500 ml-auto" />
-      </Link>
-
-      {/* Comments */}
-      <CommentSection
-        harvestId={harvest.id}
-        initialComments={comments}
-        currentUserId={authUser?.id ?? null}
-      />
-    </main>
-  );
-}
-
-function StatCard({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3">
-      <div className="flex items-center gap-1.5 text-slate-400 text-xs mb-1">
-        {icon}
-        {label}
       </div>
-      <p className="text-slate-200 font-medium text-sm">{value}</p>
-    </div>
-  );
+    </main>
+  )
 }

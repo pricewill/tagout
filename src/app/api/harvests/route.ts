@@ -1,107 +1,150 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { prisma } from "@/lib/prisma";
-import { identifySpeciesFromUrl } from "@/lib/anthropic";
-import { SpeciesType } from "@prisma/client";
+import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 
-export async function POST(request: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+// ─── validation schema ────────────────────────────────────────────────────────
+const optNum = z.coerce.number().optional()
+const optStr = z.string().optional()
+const optBool = z.boolean().optional()
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+const createHarvestSchema = z.object({
+  // required core
+  user_id:        z.string().min(1),
+  species:        z.string().min(1),
+  species_type:   z.enum(['FISH', 'BIG_GAME', 'BIRD', 'OTHER']),
+  method:         z.string().min(1),
+  location_label: z.string().min(1),
+  harvested_at:   z.string().datetime({ offset: true }).or(z.string().date()),
+
+  // optional core
+  weight_lbs:       optNum,
+  length_in:        optNum,
+  caption:          optStr,
+  ai_id_result:     optStr,
+  ai_id_confidence: optNum,
+
+  // general optional
+  companions:      optStr,
+  state:           optStr,
+  land_type:       z.enum(['PUBLIC', 'PRIVATE', 'UNKNOWN']).optional(),
+  weather:         z.enum(['SUNNY', 'OVERCAST', 'WIND', 'RAIN', 'SNOW']).optional(),
+  moon_phase:      z.enum(['NEW', 'WAXING_CRESCENT', 'FIRST_QUARTER', 'WAXING_GIBBOUS', 'FULL',
+                           'WANING_GIBBOUS', 'LAST_QUARTER', 'WANING_CRESCENT']).optional(),
+  time_of_day:     z.enum(['MORNING', 'MIDDAY', 'EVENING', 'NIGHT']).optional(),
+  personal_best:   optBool,
+  harvest_success: optBool,
+  video_url:       optStr,
+
+  // hunting-specific (BIG_GAME | BIRD)
+  shot_distance_yards: optNum,
+  season_type:         z.enum(['ARCHERY', 'MUZZLELOADER', 'RIFLE', 'GENERAL', 'SHOTGUN']).optional(),
+  tag_type:            z.enum(['GENERAL', 'LIMITED_ENTRY', 'OTC', 'PRIVATE']).optional(),
+  animal_age:          z.enum(['MATURE', 'YOUNG', 'UNKNOWN']).optional(),
+  point_count:         z.coerce.number().int().optional(),
+  score:               optNum,
+
+  // fishing-specific (FISH)
+  fly_pattern:      optStr,
+  water_type:       z.enum(['RIVER', 'LAKE', 'RESERVOIR', 'STREAM', 'POND',
+                            'BAY_ESTUARY', 'OCEAN_OFFSHORE', 'OCEAN_FLATS']).optional(),
+  technique:        z.enum(['DRY_FLY', 'NYMPH', 'STREAMER', 'SPIN', 'BAITCAST',
+                            'TROLLING', 'ICE_FISHING', 'FLY']).optional(),
+  catch_release:    optBool,
+  fish_count:       z.coerce.number().int().optional(),
+  water_conditions: z.enum(['CLEAR', 'MURKY', 'HIGH', 'LOW']).optional(),
+})
+
+type CreateHarvestInput = z.infer<typeof createHarvestSchema>
+
+// ─── strip fields that don't belong to the species type ──────────────────────
+function sanitizeBySpeciesType(data: CreateHarvestInput): CreateHarvestInput {
+  const isHunting = data.species_type === 'BIG_GAME' || data.species_type === 'BIRD'
+  const isFishing = data.species_type === 'FISH'
+
+  const out = { ...data }
+
+  if (!isHunting) {
+    out.shot_distance_yards = undefined
+    out.season_type = undefined
+    out.tag_type = undefined
+    out.animal_age = undefined
+    out.point_count = undefined
+    out.score = undefined
   }
 
+  if (!isFishing) {
+    out.fly_pattern = undefined
+    out.water_type = undefined
+    out.technique = undefined
+    out.catch_release = undefined
+    out.fish_count = undefined
+    out.water_conditions = undefined
+  }
+
+  return out
+}
+
+// ─── POST /api/harvests ───────────────────────────────────────────────────────
+export async function POST(req: NextRequest) {
+  let body: unknown
   try {
-    const formData = await request.formData();
-
-    const species = formData.get("species") as string;
-    const species_type = formData.get("species_type") as SpeciesType;
-    const method = formData.get("method") as string;
-    const location_label = formData.get("location_label") as string;
-    const lat = formData.get("lat") ? parseFloat(formData.get("lat") as string) : null;
-    const lng = formData.get("lng") ? parseFloat(formData.get("lng") as string) : null;
-    const weight_lbs = formData.get("weight_lbs") ? parseFloat(formData.get("weight_lbs") as string) : null;
-    const length_in = formData.get("length_in") ? parseFloat(formData.get("length_in") as string) : null;
-    const caption = (formData.get("caption") as string) || null;
-    const harvested_at = new Date(formData.get("harvested_at") as string);
-
-    const files = formData.getAll("images") as File[];
-
-    if (!species || !species_type || !method || !location_label || !harvested_at) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-    }
-
-    // Upload images to Supabase Storage
-    const serviceClient = await createServiceClient();
-    const uploadedImages: { storage_key: string; url: string; display_order: number; is_primary: boolean }[] = [];
-
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const ext = file.name.split(".").pop() ?? "jpg";
-      const key = `harvests/${user.id}/${Date.now()}-${i}.${ext}`;
-
-      const { error: uploadError } = await serviceClient.storage
-        .from("harvest-images")
-        .upload(key, file, { contentType: file.type, upsert: false });
-
-      if (uploadError) {
-        console.error("Upload error:", uploadError);
-        continue;
-      }
-
-      const { data: { publicUrl } } = serviceClient.storage
-        .from("harvest-images")
-        .getPublicUrl(key);
-
-      uploadedImages.push({
-        storage_key: key,
-        url: publicUrl,
-        display_order: i,
-        is_primary: i === 0,
-      });
-    }
-
-    // Run AI identification on the primary image
-    let ai_id_result: string | null = null;
-    let ai_id_confidence: number | null = null;
-
-    if (uploadedImages.length > 0) {
-      try {
-        const result = await identifySpeciesFromUrl(uploadedImages[0].url);
-        ai_id_result = result.species;
-        ai_id_confidence = result.confidence;
-      } catch (err) {
-        console.error("AI identification failed:", err);
-      }
-    }
-
-    // Create harvest record
-    const harvest = await prisma.harvest.create({
-      data: {
-        user_id: user.id,
-        species,
-        species_type,
-        method,
-        location_label,
-        lat,
-        lng,
-        weight_lbs,
-        length_in,
-        caption,
-        ai_id_result,
-        ai_id_confidence,
-        harvested_at,
-        images: {
-          create: uploadedImages,
-        },
-      },
-      include: { images: true },
-    });
-
-    return NextResponse.json({ harvest }, { status: 201 });
-  } catch (error) {
-    console.error("Create harvest error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
+
+  const parsed = createHarvestSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: 'Validation failed', issues: parsed.error.flatten().fieldErrors },
+      { status: 422 }
+    )
+  }
+
+  const data = sanitizeBySpeciesType(parsed.data)
+
+  // TODO: replace with real Prisma call once DATABASE_URL is configured:
+  //
+  // import { prisma } from '@/lib/prisma'
+  // const harvest = await prisma.harvest.create({ data })
+  // return NextResponse.json(harvest, { status: 201 })
+
+  // Mock response — returns the validated, sanitized payload with a fake id
+  const mockHarvest = {
+    id: `harvest_${Date.now()}`,
+    created_at: new Date().toISOString(),
+    ...data,
+  }
+
+  return NextResponse.json(mockHarvest, { status: 201 })
+}
+
+// ─── GET /api/harvests ────────────────────────────────────────────────────────
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url)
+  const species_type = searchParams.get('species_type')
+  const user_id = searchParams.get('user_id')
+  const limit = Math.min(parseInt(searchParams.get('limit') ?? '20'), 100)
+  const offset = parseInt(searchParams.get('offset') ?? '0')
+
+  // TODO: replace with real Prisma call:
+  //
+  // const where = {
+  //   ...(species_type ? { species_type: species_type as SpeciesType } : {}),
+  //   ...(user_id ? { user_id } : {}),
+  // }
+  // const [harvests, total] = await Promise.all([
+  //   prisma.harvest.findMany({ where, orderBy: { created_at: 'desc' }, take: limit, skip: offset,
+  //     include: { images: true, user: true, _count: { select: { likes: true, comments: true } } } }),
+  //   prisma.harvest.count({ where }),
+  // ])
+  // return NextResponse.json({ harvests, total, limit, offset })
+
+  // Mock response
+  return NextResponse.json({
+    harvests: [],
+    total: 0,
+    limit,
+    offset,
+    filters: { species_type, user_id },
+  })
 }
