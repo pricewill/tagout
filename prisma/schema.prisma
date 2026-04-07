@@ -15,6 +15,77 @@ enum SpeciesType {
   OTHER
 }
 
+enum LandType {
+  PUBLIC
+  PRIVATE
+  UNKNOWN
+}
+
+enum WeatherType {
+  SUNNY
+  OVERCAST
+  WIND
+  RAIN
+  SNOW
+}
+
+enum TimeOfDay {
+  MORNING
+  MIDDAY
+  EVENING
+  NIGHT
+}
+
+enum SeasonType {
+  ARCHERY
+  MUZZLELOADER
+  RIFLE
+  GENERAL
+  SHOTGUN
+}
+
+enum TagType {
+  GENERAL
+  LIMITED_ENTRY
+  OTC
+  PRIVATE
+}
+
+enum AnimalAge {
+  MATURE
+  YOUNG
+  UNKNOWN
+}
+
+enum WaterType {
+  RIVER
+  LAKE
+  RESERVOIR
+  STREAM
+  POND
+  BAY_ESTUARY
+  OCEAN_OFFSHORE
+  OCEAN_FLATS
+}
+
+enum WaterCondition {
+  CLEAR
+  MURKY
+  HIGH
+  LOW
+}
+
+enum FishingTechnique {
+  DRY_FLY
+  NYMPH
+  STREAMER
+  SPIN
+  BAITCAST
+  TROLLING
+  ICE_FISHING
+  FLY
+}
+
 model User {
   id           String   @id @default(uuid())
   username     String   @unique
@@ -40,8 +111,6 @@ model Harvest {
   species_type      SpeciesType
   method            String
   location_label    String
-  lat               Float?
-  lng               Float?
   weight_lbs        Float?
   length_in         Float?
   caption           String?
@@ -49,6 +118,32 @@ model Harvest {
   ai_id_confidence  Float?
   harvested_at      DateTime
   created_at        DateTime    @default(now())
+
+  // Shared fields
+  companions        String?
+  state             String?
+  land_type         LandType?
+  weather           WeatherType?
+  time_of_day       TimeOfDay?
+  personal_best     Boolean?    @default(false)
+  harvest_success   Boolean?    @default(true)
+  video_url         String?
+
+  // Hunting fields
+  shot_distance_yards Float?
+  season_type         SeasonType?
+  tag_type            TagType?
+  animal_age          AnimalAge?
+  point_count         Int?
+  score               Float?
+
+  // Fishing fields
+  fly_pattern         String?
+  water_type          WaterType?
+  technique           FishingTechnique?
+  catch_release       Boolean?    @default(false)
+  fish_count          Int?
+  water_conditions    WaterCondition?
 
   user    User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
   images  HarvestImage[]
@@ -109,3 +204,17 @@ model Comment {
 
   @@map("comments")
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
