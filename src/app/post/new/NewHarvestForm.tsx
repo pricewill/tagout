@@ -479,7 +479,7 @@ export function NewHarvestForm({ userId }: { userId: string }) {
                     <option value="">— optional —</option>
                     <option value="MORNING">Morning</option>
                     <option value="MIDDAY">Midday</option>
-                    <option value="EVENING">Evening</option>
+                    <option value="AFTERNOON">Afternoon</option>
                     <option value="NIGHT">Night</option>
                   </select>
                 </div>
