@@ -26,7 +26,7 @@ export function Navigation({ username }: NavigationProps) {
       {/* Desktop sidebar */}
       <nav className="hidden md:flex flex-col fixed left-0 top-0 h-full w-60 bg-slate-900 border-r border-slate-800 p-4 gap-1 z-30">
         <Link href="/feed" className="flex items-center gap-2 px-2 py-3 mb-4">
-          <span className="text-2xl">🧬</span>
+          <span className="text-2xl">🎯</span>
           <span className="font-bold text-xl text-amber-400 tracking-tight">Defective Gene Club</span>
         </Link>
 
