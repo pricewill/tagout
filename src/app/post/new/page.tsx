@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useSpeciesId } from '@/hooks/useSpeciesId'
 import { SpeciesBadge } from '@/components/SpeciesBadge'
+import { createClient } from '@/lib/supabase/client'
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 const optNum = z.union([z.coerce.number().positive(), z.literal('')]).optional()
@@ -86,10 +88,13 @@ function CheckboxField({ label, name, register }: { label: string; name: string;
 
 // ─── page ─────────────────────────────────────────────────────────────────────
 export default function NewPostPage() {
+  const router = useRouter()
   const [step, setStep] = useState(0)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [aiBannerDismissed, setAiBannerDismissed] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const fileRef = useRef<File | null>(null)
 
   const { identify, result: aiResult, loading: aiLoading } = useSpeciesId()
 
@@ -116,11 +121,13 @@ export default function NewPostPage() {
 
   const processFile = (file: File) => {
     if (!file.type.match(/image\/(jpeg|png)/)) return
+    fileRef.current = file
     const reader = new FileReader()
     reader.onload = (e) => {
-      setPreviewUrl(e.target?.result as string)
+      const dataUrl = e.target?.result as string
+      setPreviewUrl(dataUrl)
       setAiBannerDismissed(false)
-      identify('https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600')
+      identify(dataUrl)
     }
     reader.readAsDataURL(file)
   }
@@ -130,24 +137,59 @@ export default function NewPostPage() {
     if (aiResult?.species_type) setValue('species_type', aiResult.species_type)
   }
 
-  const onSubmit = (data: unknown) => {
-    console.log('Mock submit:', data)
-    setSubmitted(true)
-  }
+  const onSubmit = async (data: HarvestFormValues) => {
+    setSubmitting(true)
+    setSubmitError(null)
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        router.push('/login')
+        return
+      }
 
-  if (submitted) {
-    return (
-      <main className="min-h-screen bg-[#0d1a0d] text-white flex items-center justify-center p-4">
-        <div className="text-center space-y-4">
-          <div className="text-5xl">🎯</div>
-          <h2 className="text-2xl font-bold text-[#C17F24]">Adventure Tagged!</h2>
-          <p className="text-[#8aaa8a]">Your post has been submitted (mock).</p>
-          <a href="/feed" className="inline-block bg-[#C17F24] text-[#0d1a0d] px-6 py-2 rounded-full font-semibold hover:bg-[#d4912a] transition-colors">
-            Back to Feed
-          </a>
-        </div>
-      </main>
-    )
+      let imageUrl: string | undefined
+      if (fileRef.current) {
+        const file = fileRef.current
+        const ext = file.type === 'image/png' ? 'png' : 'jpg'
+        const path = `${user.id}/${Date.now()}.${ext}`
+        const { error: uploadError } = await supabase.storage
+          .from('harvest-images')
+          .upload(path, file, { upsert: false })
+        if (uploadError) throw new Error(`Image upload failed: ${uploadError.message}`)
+        const { data: { publicUrl } } = supabase.storage
+          .from('harvest-images')
+          .getPublicUrl(path)
+        imageUrl = publicUrl
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { location_label, ...rest } = data as HarvestFormValues & { location_label?: string }
+      const payload = {
+        user_id: user.id,
+        ...rest,
+        image_url: imageUrl,
+        weight_lbs: rest.weight_lbs === '' ? undefined : rest.weight_lbs,
+        length_in: rest.length_in === '' ? undefined : rest.length_in,
+      }
+
+      const res = await fetch('/api/harvests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error ?? `Server error ${res.status}`)
+      }
+
+      router.push('/feed')
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : 'Something went wrong')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -419,14 +461,25 @@ export default function NewPostPage() {
               <input {...register('video_url')} placeholder="https://…" className={inputCls} />
             </div>
 
+            {submitError && (
+              <p className="text-red-400 text-sm bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2">
+                {submitError}
+              </p>
+            )}
+
             <div className="flex gap-3">
-              <button type="button" onClick={() => setStep(2)}
-                className="flex-1 bg-[#1a2a1a] border border-[#2D4A2D] text-[#8aaa8a] py-3 rounded-xl font-semibold hover:text-white transition-colors">
+              <button type="button" onClick={() => setStep(2)} disabled={submitting}
+                className="flex-1 bg-[#1a2a1a] border border-[#2D4A2D] text-[#8aaa8a] py-3 rounded-xl font-semibold hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
                 Back
               </button>
-              <button type="submit"
-                className="flex-1 bg-[#C17F24] text-[#0d1a0d] py-3 rounded-xl font-semibold hover:bg-[#d4912a] transition-colors">
-                Tag It
+              <button type="submit" disabled={submitting}
+                className="flex-1 bg-[#C17F24] text-[#0d1a0d] py-3 rounded-xl font-semibold hover:bg-[#d4912a] transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                {submitting ? (
+                  <>
+                    <span className="h-4 w-4 rounded-full border-2 border-[#0d1a0d]/40 border-t-[#0d1a0d] animate-spin" />
+                    Posting…
+                  </>
+                ) : 'Tag It'}
               </button>
             </div>
           </form>

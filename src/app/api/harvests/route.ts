@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { prisma } from '@/lib/prisma'
 
 // ─── validation schema ────────────────────────────────────────────────────────
 const optNum = z.coerce.number().optional()
@@ -18,6 +19,7 @@ const createHarvestSchema = z.object({
   weight_lbs:       optNum,
   length_in:        optNum,
   caption:          optStr,
+  image_url:        optStr,
   ai_id_result:     optStr,
   ai_id_confidence: optNum,
 
@@ -99,22 +101,25 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const data = sanitizeBySpeciesType(parsed.data)
+  const { image_url, ...rest } = sanitizeBySpeciesType(parsed.data)
 
-  // TODO: replace with real Prisma call once DATABASE_URL is configured:
-  //
-  // import { prisma } from '@/lib/prisma'
-  // const harvest = await prisma.harvest.create({ data })
-  // return NextResponse.json(harvest, { status: 201 })
+  const harvest = await prisma.harvest.create({
+    data: rest,
+  })
 
-  // Mock response — returns the validated, sanitized payload with a fake id
-  const mockHarvest = {
-    id: `harvest_${Date.now()}`,
-    created_at: new Date().toISOString(),
-    ...data,
+  if (image_url) {
+    await prisma.harvestImage.create({
+      data: {
+        harvest_id: harvest.id,
+        url: image_url,
+        storage_key: image_url,
+        display_order: 0,
+        is_primary: true,
+      },
+    })
   }
 
-  return NextResponse.json(mockHarvest, { status: 201 })
+  return NextResponse.json(harvest, { status: 201 })
 }
 
 // ─── GET /api/harvests ────────────────────────────────────────────────────────

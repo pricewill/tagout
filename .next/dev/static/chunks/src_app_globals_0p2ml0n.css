@@ -1024,8 +1024,21 @@ body {
   border-color: rgb(30 41 59 / var(--tw-border-opacity, 1));
 }
 
+.border-\[\#0d1a0d\]\/40 {
+  border-color: #0d1a0d66;
+}
+
+.border-red-400\/20 {
+  border-color: #f8717133;
+}
+
 .border-t-transparent {
   border-top-color: #0000;
+}
+
+.border-t-\[\#0d1a0d\] {
+  --tw-border-opacity: 1;
+  border-top-color: rgb(13 26 13 / var(--tw-border-opacity, 1));
 }
 
 .bg-\[\#0d1a0d\] {
@@ -1204,6 +1217,10 @@ body {
 
 .bg-white\/50 {
   background-color: #ffffff80;
+}
+
+.bg-red-400\/10 {
+  background-color: #f871711a;
 }
 
 .bg-gradient-to-t {
@@ -1895,6 +1912,10 @@ body {
 
 .disabled\:opacity-50:disabled {
   opacity: .5;
+}
+
+.disabled\:opacity-60:disabled {
+  opacity: .6;
 }
 
 .group:hover .group-hover\:scale-105 {
