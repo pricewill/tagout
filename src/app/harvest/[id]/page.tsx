@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { SpeciesBadge } from '@/components/SpeciesBadge'
+import { ReactionBar, ReactionCount } from '@/components/ReactionBar'
 
 type SpeciesType = 'FISH' | 'BIG_GAME' | 'BIRD' | 'OTHER'
 
@@ -19,7 +20,7 @@ interface Harvest {
   ai_id_result?: string
   ai_id_confidence?: number
   scientific_name?: string
-  like_count: number
+  reactions?: ReactionCount[]
   comment_count: number
   video_url?: string
   // general
@@ -155,8 +156,6 @@ const PeopleIcon = <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" f
 // ─── page ─────────────────────────────────────────────────────────────────────
 export default function HarvestDetailPage() {
   const h = harvest
-  const [liked, setLiked] = useState(false)
-  const [likeCount, setLikeCount] = useState(h?.like_count ?? 0)
   const [comment, setComment] = useState('')
   const [comments, setComments] = useState(h?.comments ?? [])
 
@@ -185,11 +184,6 @@ export default function HarvestDetailPage() {
 
   const isHunting = h.species_type === 'BIG_GAME' || h.species_type === 'BIRD'
   const isFishing = h.species_type === 'FISH'
-
-  const toggleLike = () => {
-    setLiked((p) => !p)
-    setLikeCount((p) => (liked ? p - 1 : p + 1))
-  }
 
   const submitComment = (e: React.FormEvent) => {
     e.preventDefault()
@@ -321,15 +315,15 @@ export default function HarvestDetailPage() {
             </div>
           </a>
 
-          {/* Like */}
-          <button onClick={toggleLike}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-colors font-semibold text-sm
-              ${liked ? 'bg-red-900/40 border-red-700/60 text-red-400' : 'bg-[#1a2a1a] border-[#2D4A2D] text-[#8aaa8a] hover:border-red-700/60 hover:text-red-400'}`}>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill={liked ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
-            {likeCount} {likeCount === 1 ? 'Like' : 'Likes'}
-          </button>
+          {/* Reactions */}
+          <div className="space-y-2">
+            <p className="text-xs font-bold uppercase tracking-widest text-[#4a7a4a]">Reactions</p>
+            <ReactionBar
+              harvestId={h.id}
+              initialReactions={h.reactions ?? []}
+              size="lg"
+            />
+          </div>
 
           {/* Comments */}
           <div className="space-y-4">

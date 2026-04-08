@@ -4,6 +4,7 @@ import { HarvestCard } from "@/components/HarvestCard";
 import { getCurrentUser } from "@/lib/auth";
 import Link from "next/link";
 import { Fish, PlusCircle } from "lucide-react";
+import type { ReactionCount } from "@/components/ReactionBar";
 
 const PAGE_SIZE = 12;
 
@@ -18,7 +19,9 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 
   const currentUser = await getCurrentUser();
   const supabase = await createClient();
-  const { data: { user: authUser } } = await supabase.auth.getUser();
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
 
   // If user has follows, show followed users' harvests; otherwise show global feed
   let harvestWhere = {};
@@ -48,23 +51,44 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
       include: {
         user: { select: { username: true, display_name: true, avatar_url: true } },
         images: { select: { url: true, display_order: true } },
-        _count: { select: { likes: true, comments: true } },
+        _count: { select: { comments: true } },
       },
     }),
     prisma.harvest.count({ where: harvestWhere }),
   ]);
 
-  // Get liked harvest IDs for current user
-  let likedIds = new Set<string>();
-  if (authUser) {
-    const likes = await prisma.like.findMany({
-      where: {
-        user_id: authUser.id,
-        harvest_id: { in: harvests.map((h) => h.id) },
-      },
-      select: { harvest_id: true },
+  // Fetch reaction counts + current user's reactions in parallel
+  const harvestIds = harvests.map((h) => h.id);
+
+  const [reactionCounts, userReactions] = await Promise.all([
+    prisma.reaction.groupBy({
+      by: ["harvest_id", "emoji"],
+      where: { harvest_id: { in: harvestIds } },
+      _count: { emoji: true },
+    }),
+    authUser
+      ? prisma.reaction.findMany({
+          where: { user_id: authUser.id, harvest_id: { in: harvestIds } },
+          select: { harvest_id: true, emoji: true },
+        })
+      : Promise.resolve([]),
+  ]);
+
+  const userReactedSet = new Set(
+    userReactions.map((r) => `${r.harvest_id}:${r.emoji}`)
+  );
+
+  const reactionsByHarvest = new Map<string, ReactionCount[]>();
+  for (const row of reactionCounts) {
+    const harvestId = row.harvest_id;
+    if (!reactionsByHarvest.has(harvestId)) {
+      reactionsByHarvest.set(harvestId, []);
+    }
+    reactionsByHarvest.get(harvestId)!.push({
+      emoji: row.emoji,
+      count: row._count.emoji,
+      userReacted: userReactedSet.has(`${harvestId}:${row.emoji}`),
     });
-    likedIds = new Set(likes.map((l) => l.harvest_id));
   }
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -121,7 +145,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
               <HarvestCard
                 key={harvest.id}
                 harvest={harvest}
-                isLiked={likedIds.has(harvest.id)}
+                reactions={reactionsByHarvest.get(harvest.id) ?? []}
                 currentUserId={authUser?.id}
               />
             ))}

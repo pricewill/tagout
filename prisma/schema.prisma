@@ -26,11 +26,12 @@ model User {
   home_state   String?
   created_at   DateTime  @default(now())
 
-  harvests  Harvest[]
-  likes     Like[]
-  comments  Comment[]
-  followers Follow[]  @relation("following")
-  following Follow[]  @relation("follower")
+  harvests   Harvest[]
+  likes      Like[]
+  reactions  Reaction[]
+  comments   Comment[]
+  followers  Follow[]   @relation("following")
+  following  Follow[]   @relation("follower")
 }
 
 model Harvest {
@@ -74,10 +75,11 @@ model Harvest {
   fish_count        Int?
   water_conditions  String?     // CLEAR | MURKY | HIGH | LOW
 
-  user    User           @relation(fields: [user_id], references: [id])
-  images  HarvestImage[]
-  likes   Like[]
-  comments Comment[]
+  user      User           @relation(fields: [user_id], references: [id])
+  images    HarvestImage[]
+  likes     Like[]
+  reactions Reaction[]
+  comments  Comment[]
 }
 
 model HarvestImage {
@@ -124,4 +126,17 @@ model Comment {
 
   user    User    @relation(fields: [user_id], references: [id])
   harvest Harvest @relation(fields: [harvest_id], references: [id])
+}
+
+model Reaction {
+  id         String   @id @default(cuid())
+  user_id    String
+  harvest_id String
+  emoji      String
+  created_at DateTime @default(now())
+
+  user    User    @relation(fields: [user_id], references: [id])
+  harvest Harvest @relation(fields: [harvest_id], references: [id])
+
+  @@unique([user_id, harvest_id, emoji])
 }

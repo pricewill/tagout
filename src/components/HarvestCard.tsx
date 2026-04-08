@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { Heart, MessageCircle, Scale, Ruler } from "lucide-react";
+import { MessageCircle, Scale, Ruler } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { SpeciesBadge } from "@/components/ui/SpeciesBadge";
 import { Avatar } from "@/components/ui/Avatar";
 import { ImageCarousel } from "@/components/ImageCarousel";
+import { ReactionBar, ReactionCount } from "@/components/ReactionBar";
 import { formatWeight, formatLength } from "@/lib/utils";
 
 interface HarvestCardProps {
@@ -24,13 +25,13 @@ interface HarvestCardProps {
       avatar_url: string | null;
     };
     images: { url: string; display_order: number }[];
-    _count?: { likes: number; comments: number };
+    _count?: { comments: number };
   };
-  isLiked?: boolean;
+  reactions?: ReactionCount[];
   currentUserId?: string | null;
 }
 
-export function HarvestCard({ harvest, isLiked = false }: HarvestCardProps) {
+export function HarvestCard({ harvest, reactions = [], currentUserId }: HarvestCardProps) {
   const sortedImages = [...harvest.images].sort(
     (a, b) => a.display_order - b.display_order
   );
@@ -75,7 +76,7 @@ export function HarvestCard({ harvest, isLiked = false }: HarvestCardProps) {
           <p className="text-slate-400 text-sm">{harvest.method}</p>
         </div>
 
-        {/* Stats row */}
+        {/* Measurements */}
         <div className="flex flex-wrap gap-3 text-sm text-slate-400">
           {harvest.weight_lbs != null && (
             <span className="flex items-center gap-1">
@@ -96,24 +97,23 @@ export function HarvestCard({ harvest, isLiked = false }: HarvestCardProps) {
           <p className="text-slate-300 text-sm line-clamp-2">{harvest.caption}</p>
         )}
 
-        {/* Footer */}
+        {/* Reactions */}
+        <ReactionBar
+          harvestId={harvest.id}
+          initialReactions={reactions}
+          currentUserId={currentUserId}
+          size="sm"
+        />
+
+        {/* Footer: comments + time */}
         <div className="flex items-center justify-between pt-1 border-t border-slate-700/50">
-          <div className="flex items-center gap-4">
-            <span
-              className={`flex items-center gap-1.5 text-sm ${
-                isLiked ? "text-red-400" : "text-slate-400"
-              }`}
-            >
-              <Heart
-                className={`w-4 h-4 ${isLiked ? "fill-red-400" : ""}`}
-              />
-              {harvest._count?.likes ?? 0}
-            </span>
-            <span className="flex items-center gap-1.5 text-sm text-slate-400">
-              <MessageCircle className="w-4 h-4" />
-              {harvest._count?.comments ?? 0}
-            </span>
-          </div>
+          <Link
+            href={`/harvest/${harvest.id}#comments`}
+            className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-200 transition-colors"
+          >
+            <MessageCircle className="w-4 h-4" />
+            {harvest._count?.comments ?? 0}
+          </Link>
           <time className="text-xs text-slate-500">
             {formatDistanceToNow(new Date(harvest.harvested_at), {
               addSuffix: true,
