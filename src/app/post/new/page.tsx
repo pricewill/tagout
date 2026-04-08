@@ -111,7 +111,7 @@ export default function NewPostPage() {
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<HarvestFormValues>({
     resolver: zodResolver(harvestSchema) as any,
-    defaultValues: { species_type: 'FISH', harvest_success: true, personal_best: false, catch_release: false },
+    defaultValues: { species_type: 'FISH', harvest_success: true, personal_best: false, catch_release: false, harvested_at: new Date().toISOString().slice(0, 10) },
   })
 
   const speciesType = watch('species_type')
