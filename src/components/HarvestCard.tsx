@@ -14,7 +14,7 @@ interface HarvestCardProps {
     id: string;
     species: string;
     species_type: string;
-    method: string;
+    method: string | null;
     weight_lbs: number | null;
     length_in: number | null;
     caption: string | null;
