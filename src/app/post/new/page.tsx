@@ -109,7 +109,7 @@ export default function NewPostPage() {
   const { identify, result: aiResult, loading: aiLoading } = useSpeciesId()
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<HarvestFormValues>({
-    resolver: zodResolver(harvestSchema) as any,
+    resolver: zodResolver(harvestSchema) as any, onChange: (errors: unknown) => console.log("ERRORS", errors),
     defaultValues: { species_type: 'FISH', harvest_success: true, personal_best: false, catch_release: false },
   })
 
@@ -147,7 +147,7 @@ export default function NewPostPage() {
     if (aiResult?.species_type) setValue('species_type', aiResult.species_type)
   }
 
-  const onSubmit = async (data: HarvestFormValues) => {
+  const onSubmit = async (data: HarvestFormValues) => { console.log("SUBMIT CALLED", data)
     setSubmitting(true)
     setSubmitError(null)
     try {
