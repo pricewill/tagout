@@ -32,7 +32,7 @@ const createHarvestSchema = z.object({
   weather:         optEnum(['SUNNY', 'OVERCAST', 'WIND', 'RAIN', 'SNOW'] as const),
   moon_phase:      optEnum(['NEW', 'WAXING_CRESCENT', 'FIRST_QUARTER', 'WAXING_GIBBOUS', 'FULL',
                             'WANING_GIBBOUS', 'LAST_QUARTER', 'WANING_CRESCENT'] as const),
-  time_of_day:     optEnum(['MORNING', 'MIDDAY', 'EVENING', 'NIGHT'] as const),
+  time_of_day:     optEnum(['MORNING', 'MIDDAY', 'AFTERNOON', 'NIGHT'] as const),
   personal_best:   optBool,
   harvest_success: optBool,
   video_url:       optStr,
