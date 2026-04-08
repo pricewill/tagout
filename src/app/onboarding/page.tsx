@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
-import { US_STATES } from "@/lib/utils";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -49,7 +48,7 @@ export default function OnboardingPage() {
     <main className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <span className="text-4xl">🧬</span>
+          <span className="text-4xl">🎯</span>
           <h1 className="text-2xl font-bold text-amber-400 mt-2">Welcome to Defective Gene Club!</h1>
           <p className="text-slate-400 text-sm mt-1">Set up your hunter profile</p>
         </div>
@@ -89,18 +88,16 @@ export default function OnboardingPage() {
 
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                Home State
+                Where are you based?
               </label>
-              <select
+              <input
+                type="text"
                 value={form.home_state}
                 onChange={(e) => update("home_state", e.target.value)}
-                className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500"
-              >
-                <option value="">Select state…</option>
-                {US_STATES.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
+                placeholder="e.g. Montana, New Zealand, Bahamas..."
+                maxLength={100}
+                className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500"
+              />
             </div>
 
             <div>
