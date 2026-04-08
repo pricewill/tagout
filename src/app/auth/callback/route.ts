@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createServerClient } from "@supabase/ssr";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
@@ -7,19 +7,41 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
 
   if (code) {
-    const supabase = await createClient();
+    const redirectTo = `${origin}/feed`;
+    const response = NextResponse.redirect(redirectTo);
+
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              response.cookies.set(name, value, options);
+            });
+          },
+        },
+      }
+    );
+
     const { data: { user }, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error && user) {
-      // Ensure user record exists in our DB
       const existing = await prisma.user.findUnique({ where: { id: user.id } });
 
       if (!existing) {
-        // New user — require invite code before onboarding
-        return NextResponse.redirect(`${origin}/invite`);
+        // New user — redirect to invite page (cookies already set on response)
+        const inviteResponse = NextResponse.redirect(`${origin}/invite`);
+        response.cookies.getAll().forEach(({ name, value, ...options }) => {
+          inviteResponse.cookies.set(name, value, options);
+        });
+        return inviteResponse;
       }
 
-      return NextResponse.redirect(`${origin}/feed`);
+      return response;
     }
   }
 
