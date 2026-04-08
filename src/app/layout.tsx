@@ -5,11 +5,11 @@ import { getCurrentUser } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: {
-    default: "TagOut — Share Your Harvest",
-    template: "%s | TagOut",
+    default: "Defective Gene Club — Share Your Harvest",
+    template: "%s | Defective Gene Club",
   },
   description:
-    "TagOut is the social platform for hunters and anglers to share harvests, track records, and connect with the outdoors community.",
+    "Defective Gene Club is the social platform for hunters and anglers to share harvests, track records, and connect with the outdoors community.",
 };
 
 export default async function RootLayout({

@@ -49,8 +49,8 @@ export default function OnboardingPage() {
     <main className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <span className="text-4xl">🎯</span>
-          <h1 className="text-2xl font-bold text-amber-400 mt-2">Welcome to TagOut!</h1>
+          <span className="text-4xl">🧬</span>
+          <h1 className="text-2xl font-bold text-amber-400 mt-2">Welcome to Defective Gene Club!</h1>
           <p className="text-slate-400 text-sm mt-1">Set up your hunter profile</p>
         </div>
 

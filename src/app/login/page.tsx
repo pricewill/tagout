@@ -37,9 +37,9 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <span className="text-4xl">🎯</span>
+          <span className="text-4xl">🧬</span>
           <h1 className="text-2xl font-bold text-amber-400 mt-2 tracking-tight">
-            TagOut
+            Defective Gene Club
           </h1>
           <p className="text-slate-400 text-sm mt-1">
             Share your harvest with the world
@@ -65,7 +65,7 @@ export default function LoginPage() {
           ) : (
             <form onSubmit={handleMagicLink} className="space-y-4">
               <div>
-                <h2 className="font-semibold text-white mb-4">Sign in to TagOut</h2>
+                <h2 className="font-semibold text-white mb-4">Sign in to Defective Gene Club</h2>
                 <label className="block text-sm text-slate-300 mb-1.5">
                   Email address
                 </label>
