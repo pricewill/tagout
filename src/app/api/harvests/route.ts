@@ -15,7 +15,7 @@ const createHarvestSchema = z.object({
   species:        z.string().min(1),
   species_type:   z.enum(['FISH', 'BIG_GAME', 'BIRD', 'OTHER']),
   method:         optStr,
-  harvested_at:   z.string().datetime({ offset: true }).or(z.string().date()),
+  harvested_at:   z.string().min(1).transform(v => new Date(v).toISOString()),
 
   // optional core
   weight_lbs:       optNum,
