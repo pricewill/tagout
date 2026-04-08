@@ -47,6 +47,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 }
 
 
+// Validate ../../../src/app/admin/invites/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/admin/invites">> = Specific
+  const handler = {} as typeof import("../../../src/app/admin/invites/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../../src/app/feed/page.tsx
 {
   type __IsExpected<Specific extends AppPageConfig<"/feed">> = Specific
@@ -60,6 +69,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 {
   type __IsExpected<Specific extends AppPageConfig<"/harvest/[id]">> = Specific
   const handler = {} as typeof import("../../../src/app/harvest/[id]/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/invite/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/invite">> = Specific
+  const handler = {} as typeof import("../../../src/app/invite/page.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check
@@ -119,6 +137,24 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../../src/app/api/admin/invites/[id]/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/admin/invites/[id]">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/admin/invites/[id]/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/admin/invites/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/admin/invites">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/admin/invites/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../../src/app/api/ai-identify/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/ai-identify">> = Specific
@@ -155,10 +191,28 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../../src/app/api/harvests/[id]/react/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/harvests/[id]/react">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/harvests/[id]/react/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../../src/app/api/harvests/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/harvests">> = Specific
   const handler = {} as typeof import("../../../src/app/api/harvests/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/invite/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/invite">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/invite/route.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check

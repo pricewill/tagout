@@ -121,7 +121,6 @@ async function FeedPage({ searchParams }) {
                 },
                 _count: {
                     select: {
-                        likes: true,
                         comments: true
                     }
                 }
@@ -131,21 +130,48 @@ async function FeedPage({ searchParams }) {
             where: harvestWhere
         })
     ]);
-    // Get liked harvest IDs for current user
-    let likedIds = new Set();
-    if (authUser) {
-        const likes = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["prisma"].like.findMany({
+    // Fetch reaction counts + current user's reactions in parallel
+    const harvestIds = harvests.map((h)=>h.id);
+    const [reactionCounts, userReactions] = await Promise.all([
+        __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["prisma"].reaction.groupBy({
+            by: [
+                "harvest_id",
+                "emoji"
+            ],
+            where: {
+                harvest_id: {
+                    in: harvestIds
+                }
+            },
+            _count: {
+                emoji: true
+            }
+        }),
+        authUser ? __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["prisma"].reaction.findMany({
             where: {
                 user_id: authUser.id,
                 harvest_id: {
-                    in: harvests.map((h)=>h.id)
+                    in: harvestIds
                 }
             },
             select: {
-                harvest_id: true
+                harvest_id: true,
+                emoji: true
             }
+        }) : Promise.resolve([])
+    ]);
+    const userReactedSet = new Set(userReactions.map((r)=>`${r.harvest_id}:${r.emoji}`));
+    const reactionsByHarvest = new Map();
+    for (const row of reactionCounts){
+        const harvestId = row.harvest_id;
+        if (!reactionsByHarvest.has(harvestId)) {
+            reactionsByHarvest.set(harvestId, []);
+        }
+        reactionsByHarvest.get(harvestId).push({
+            emoji: row.emoji,
+            count: row._count.emoji,
+            userReacted: userReactedSet.has(`${harvestId}:${row.emoji}`)
         });
-        likedIds = new Set(likes.map((l)=>l.harvest_id));
     }
     const totalPages = Math.ceil(total / PAGE_SIZE);
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("main", {
@@ -161,7 +187,7 @@ async function FeedPage({ searchParams }) {
                                 children: feedMode === "following" ? "Following" : "Discover"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/feed/page.tsx",
-                                lineNumber: 77,
+                                lineNumber: 101,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -169,13 +195,13 @@ async function FeedPage({ searchParams }) {
                                 children: feedMode === "following" ? "Latest from hunters & anglers you follow" : "Explore all recent harvests"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/feed/page.tsx",
-                                lineNumber: 80,
+                                lineNumber: 104,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/feed/page.tsx",
-                        lineNumber: 76,
+                        lineNumber: 100,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$client$2f$app$2d$dir$2f$link$2e$react$2d$server$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"], {
@@ -186,20 +212,20 @@ async function FeedPage({ searchParams }) {
                                 className: "w-4 h-4"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/feed/page.tsx",
-                                lineNumber: 90,
+                                lineNumber: 114,
                                 columnNumber: 11
                             }, this),
                             "Post Harvest"
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/feed/page.tsx",
-                        lineNumber: 86,
+                        lineNumber: 110,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/feed/page.tsx",
-                lineNumber: 75,
+                lineNumber: 99,
                 columnNumber: 7
             }, this),
             harvests.length === 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -209,7 +235,7 @@ async function FeedPage({ searchParams }) {
                         className: "w-12 h-12 text-slate-600 mx-auto mb-4"
                     }, void 0, false, {
                         fileName: "[project]/src/app/feed/page.tsx",
-                        lineNumber: 98,
+                        lineNumber: 122,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
@@ -217,7 +243,7 @@ async function FeedPage({ searchParams }) {
                         children: "No harvests yet"
                     }, void 0, false, {
                         fileName: "[project]/src/app/feed/page.tsx",
-                        lineNumber: 99,
+                        lineNumber: 123,
                         columnNumber: 11
                     }, this),
                     feedMode === "following" ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -225,14 +251,14 @@ async function FeedPage({ searchParams }) {
                         children: "The people you follow haven't posted any harvests yet."
                     }, void 0, false, {
                         fileName: "[project]/src/app/feed/page.tsx",
-                        lineNumber: 101,
+                        lineNumber: 125,
                         columnNumber: 13
                     }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                         className: "text-slate-500 mb-6",
                         children: "Be the first to share a harvest!"
                     }, void 0, false, {
                         fileName: "[project]/src/app/feed/page.tsx",
-                        lineNumber: 105,
+                        lineNumber: 129,
                         columnNumber: 13
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$client$2f$app$2d$dir$2f$link$2e$react$2d$server$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"], {
@@ -243,20 +269,20 @@ async function FeedPage({ searchParams }) {
                                 className: "w-4 h-4"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/feed/page.tsx",
-                                lineNumber: 113,
+                                lineNumber: 137,
                                 columnNumber: 13
                             }, this),
                             "Post Your First Harvest"
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/feed/page.tsx",
-                        lineNumber: 109,
+                        lineNumber: 133,
                         columnNumber: 11
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/feed/page.tsx",
-                lineNumber: 97,
+                lineNumber: 121,
                 columnNumber: 9
             }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["Fragment"], {
                 children: [
@@ -264,16 +290,16 @@ async function FeedPage({ searchParams }) {
                         className: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4",
                         children: harvests.map((harvest)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$HarvestCard$2e$tsx__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["HarvestCard"], {
                                 harvest: harvest,
-                                isLiked: likedIds.has(harvest.id),
+                                reactions: reactionsByHarvest.get(harvest.id) ?? [],
                                 currentUserId: authUser?.id
                             }, harvest.id, false, {
                                 fileName: "[project]/src/app/feed/page.tsx",
-                                lineNumber: 121,
+                                lineNumber: 145,
                                 columnNumber: 15
                             }, this))
                     }, void 0, false, {
                         fileName: "[project]/src/app/feed/page.tsx",
-                        lineNumber: 119,
+                        lineNumber: 143,
                         columnNumber: 11
                     }, this),
                     totalPages > 1 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -285,7 +311,7 @@ async function FeedPage({ searchParams }) {
                                 children: "Previous"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/feed/page.tsx",
-                                lineNumber: 134,
+                                lineNumber: 158,
                                 columnNumber: 17
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -298,7 +324,7 @@ async function FeedPage({ searchParams }) {
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/feed/page.tsx",
-                                lineNumber: 141,
+                                lineNumber: 165,
                                 columnNumber: 15
                             }, this),
                             page < totalPages && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$client$2f$app$2d$dir$2f$link$2e$react$2d$server$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"], {
@@ -307,13 +333,13 @@ async function FeedPage({ searchParams }) {
                                 children: "Next"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/feed/page.tsx",
-                                lineNumber: 145,
+                                lineNumber: 169,
                                 columnNumber: 17
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/feed/page.tsx",
-                        lineNumber: 132,
+                        lineNumber: 156,
                         columnNumber: 13
                     }, this)
                 ]
@@ -321,7 +347,7 @@ async function FeedPage({ searchParams }) {
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/feed/page.tsx",
-        lineNumber: 73,
+        lineNumber: 97,
         columnNumber: 5
     }, this);
 }
