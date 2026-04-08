@@ -101,8 +101,10 @@ export async function POST(req: NextRequest) {
 
   const parsed = createHarvestSchema.safeParse(body)
   if (!parsed.success) {
+    const fieldErrors = parsed.error.flatten().fieldErrors
+    console.error('Validation failed:', JSON.stringify(fieldErrors))
     return NextResponse.json(
-      { error: 'Validation failed', issues: parsed.error.flatten().fieldErrors },
+      { error: 'Validation failed: ' + Object.entries(fieldErrors).map(([k, v]) => `${k}: ${v}`).join(', ') },
       { status: 422 }
     )
   }
