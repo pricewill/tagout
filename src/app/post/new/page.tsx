@@ -202,6 +202,7 @@ export default function NewPostPage() {
       const payload = {
         ...data,
         image_url: imageUrl,
+        harvested_at: data.harvested_at ? new Date(data.harvested_at).toISOString() : undefined,
         weight_lbs: data.weight_lbs === '' ? undefined : data.weight_lbs,
         length_in: data.length_in === '' ? undefined : data.length_in,
       }
