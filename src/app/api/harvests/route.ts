@@ -12,7 +12,7 @@ const createHarvestSchema = z.object({
   // required core
   species:        z.string().min(1),
   species_type:   z.enum(['FISH', 'BIG_GAME', 'BIRD', 'OTHER']),
-  method:         z.string().min(1),
+  method:         optStr,
   harvested_at:   z.string().datetime({ offset: true }).or(z.string().date()),
 
   // optional core

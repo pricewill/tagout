@@ -18,7 +18,6 @@ const harvestSchema = z.object({
   // core
   species:        z.string().min(1, 'Species is required'),
   species_type:   z.enum(['FISH', 'BIG_GAME', 'BIRD', 'OTHER']),
-  method:         z.string().min(1, 'Method is required'),
   weight_lbs:     optNum,
   length_in:      optNum,
   harvested_at:   z.string().min(1, 'Date is required'),
@@ -354,11 +353,8 @@ export default function NewPostPage() {
               <p className={sectionTitleCls}>Where &amp; When</p>
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2">
-                  <label className={labelCls}>State</label>
-                  <select {...register('state')} className={selectCls}>
-                    <option value="">— select state —</option>
-                    {US_STATES.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
+                  <label className={labelCls}>Where</label>
+                  <input {...register('state')} placeholder="e.g. Montana, New Zealand, Bahamas..." className={inputCls} />
                 </div>
                 <div>
                   <label className={labelCls}>Date *</label>
@@ -372,30 +368,22 @@ export default function NewPostPage() {
               </div>
             </div>
 
-            {/* ── Measurements ── */}
-            <div className={sectionCls}>
-              <p className={sectionTitleCls}>Measurements</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={labelCls}>Weight (lbs)</label>
-                  <input {...register('weight_lbs')} type="number" step="0.1" min="0" placeholder="0.0" className={inputCls} />
-                </div>
-                <div>
-                  <label className={labelCls}>Length (in)</label>
-                  <input {...register('length_in')} type="number" step="0.1" min="0" placeholder="0.0" className={inputCls} />
+            {/* ── Measurements (fish only) ── */}
+            {isFishing && (
+              <div className={sectionCls}>
+                <p className={sectionTitleCls}>Measurements</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={labelCls}>Weight (lbs)</label>
+                    <input {...register('weight_lbs')} type="number" step="0.1" min="0" placeholder="0.0" className={inputCls} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Length (in)</label>
+                    <input {...register('length_in')} type="number" step="0.1" min="0" placeholder="0.0" className={inputCls} />
+                  </div>
                 </div>
               </div>
-            </div>
-
-            {/* ── Method ── */}
-            <div className={sectionCls}>
-              <p className={sectionTitleCls}>Method</p>
-              <div>
-                <label className={labelCls}>Method *</label>
-                <input {...register('method')} placeholder="e.g. Fly fishing, Rifle, Archery…" className={inputCls} />
-                {errors.method && <p className="text-red-400 text-xs mt-1">{errors.method.message}</p>}
-              </div>
-            </div>
+            )}
 
             <NavButtons onBack={() => setStep(0)} onNext={() => setStep(2)} />
           </div>

@@ -39,7 +39,7 @@ model Harvest {
   user_id           String
   species           String
   species_type      SpeciesType
-  method            String
+  method            String?
   weight_lbs        Float?
   length_in         Float?
   caption           String?
