@@ -113,20 +113,30 @@ export async function POST(req: NextRequest) {
 
   const { image_url, ...rest } = sanitizeBySpeciesType(parsed.data)
 
-  const harvest = await prisma.harvest.create({
-    data: { ...rest, user_id: user.id },
-  })
+  let harvest
+  try {
+    harvest = await prisma.harvest.create({
+      data: { ...rest, user_id: user.id },
+    })
+  } catch (e) {
+    console.error('Prisma error:', e)
+    return NextResponse.json({ error: String(e) }, { status: 500 })
+  }
 
   if (image_url) {
-    await prisma.harvestImage.create({
-      data: {
-        harvest_id: harvest.id,
-        url: image_url,
-        storage_key: image_url,
-        display_order: 0,
-        is_primary: true,
-      },
-    })
+    try {
+      await prisma.harvestImage.create({
+        data: {
+          harvest_id: harvest.id,
+          url: image_url,
+          storage_key: image_url,
+          display_order: 0,
+          is_primary: true,
+        },
+      })
+    } catch (e) {
+      console.error('Prisma image error:', e)
+    }
   }
 
   return NextResponse.json(harvest, { status: 201 })
