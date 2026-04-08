@@ -171,16 +171,19 @@ export default function NewPostPage() {
   }
 
   const onSubmit = async (data: HarvestFormValues) => {
+    console.log('Step 1: Submit called', data)
     setSubmitting(true)
     setSubmitError(null)
     try {
       const supabase = createClient()
 
+      const { data: { user } } = await supabase.auth.getUser()
+      console.log('Step 2: Got user:', user?.id ?? 'null')
+      if (!user) { router.push('/login'); return }
+
       let imageUrl: string | undefined
       if (fileRef.current) {
         const file = fileRef.current
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) { router.push('/login'); return }
         const ext = file.type === 'image/png' ? 'png' : 'jpg'
         const path = `${user.id}/${Date.now()}.${ext}`
         const { error: uploadError } = await supabase.storage
@@ -191,6 +194,9 @@ export default function NewPostPage() {
           .from('harvest-images')
           .getPublicUrl(path)
         imageUrl = publicUrl
+        console.log('Step 3: Image uploaded', imageUrl)
+      } else {
+        console.log('Step 3: No image to upload')
       }
 
       const payload = {
@@ -200,19 +206,23 @@ export default function NewPostPage() {
         length_in: data.length_in === '' ? undefined : data.length_in,
       }
 
+      console.log('Step 4: Posting to API', payload)
       const res = await fetch('/api/harvests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
 
+      console.log('Step 5: API response:', res.status)
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
         throw new Error(err.error ?? `Server error ${res.status}`)
       }
 
+      console.log('Step 6: Done, redirecting')
       router.push('/feed')
     } catch (e) {
+      console.error('Submit error:', e)
       setSubmitError(e instanceof Error ? e.message : 'Something went wrong')
     } finally {
       setSubmitting(false)
@@ -474,7 +484,7 @@ export default function NewPostPage() {
 
         {/* ── STEP 3: Caption & Submit ── */}
         {step === 3 && (
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <form onSubmit={handleSubmit(onSubmit, (errs) => { console.error('Validation errors:', errs); setSubmitError('Validation failed: ' + Object.keys(errs).join(', ')) })} className="space-y-5">
             <h2 className="text-xl font-semibold">Caption &amp; Submit</h2>
 
             {previewUrl && (
@@ -494,9 +504,9 @@ export default function NewPostPage() {
             </div>
 
             {submitError && (
-              <p className="text-red-400 text-sm bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2">
-                {submitError}
-              </p>
+              <div className="text-red-300 text-base font-semibold bg-red-600/20 border-2 border-red-500 rounded-xl px-4 py-3">
+                ⚠️ Error: {submitError}
+              </div>
             )}
 
             <div className="flex gap-3">

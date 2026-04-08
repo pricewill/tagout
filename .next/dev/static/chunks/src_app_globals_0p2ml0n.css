@@ -1028,6 +1028,11 @@ body {
   border-color: rgb(30 41 59 / var(--tw-border-opacity, 1));
 }
 
+.border-red-500 {
+  --tw-border-opacity: 1;
+  border-color: rgb(239 68 68 / var(--tw-border-opacity, 1));
+}
+
 .border-t-\[\#0d1a0d\] {
   --tw-border-opacity: 1;
   border-top-color: rgb(13 26 13 / var(--tw-border-opacity, 1));
@@ -1217,6 +1222,10 @@ body {
 
 .bg-white\/50 {
   background-color: #ffffff80;
+}
+
+.bg-red-600\/20 {
+  background-color: #dc262633;
 }
 
 .bg-gradient-to-t {
