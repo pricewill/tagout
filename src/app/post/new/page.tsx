@@ -18,7 +18,6 @@ const harvestSchema = z.object({
   species:        z.string().min(1, 'Species is required'),
   species_type:   z.enum(['FISH', 'BIG_GAME', 'BIRD', 'OTHER']),
   method:         z.string().min(1, 'Method is required'),
-  location_label: z.string().min(1, 'Location is required'),
   weight_lbs:     optNum,
   length_in:      optNum,
   harvested_at:   z.string().min(1, 'Date is required'),
@@ -55,6 +54,17 @@ const harvestSchema = z.object({
 type HarvestFormValues = z.infer<typeof harvestSchema>
 
 const STEPS = ['Photo', 'Details', 'Conditions', 'Caption']
+
+const US_STATES = [
+  'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut',
+  'Delaware', 'District of Columbia', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois',
+  'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts',
+  'Michigan', 'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada',
+  'New Hampshire', 'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota',
+  'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina',
+  'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington',
+  'West Virginia', 'Wisconsin', 'Wyoming',
+]
 
 // ─── small reusable atoms ─────────────────────────────────────────────────────
 const inputCls = 'w-full bg-[#1a2a1a] border border-[#2D4A2D] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#C17F24]'
@@ -163,14 +173,12 @@ export default function NewPostPage() {
         imageUrl = publicUrl
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { location_label, ...rest } = data as HarvestFormValues & { location_label?: string }
       const payload = {
         user_id: user.id,
-        ...rest,
+        ...data,
         image_url: imageUrl,
-        weight_lbs: rest.weight_lbs === '' ? undefined : rest.weight_lbs,
-        length_in: rest.length_in === '' ? undefined : rest.length_in,
+        weight_lbs: data.weight_lbs === '' ? undefined : data.weight_lbs,
+        length_in: data.length_in === '' ? undefined : data.length_in,
       }
 
       const res = await fetch('/api/harvests', {
@@ -309,13 +317,11 @@ export default function NewPostPage() {
               <p className={sectionTitleCls}>Where &amp; When</p>
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2">
-                  <label className={labelCls}>Location *</label>
-                  <input {...register('location_label')} placeholder="e.g. Snake River, WY" className={inputCls} />
-                  {errors.location_label && <p className="text-red-400 text-xs mt-1">{errors.location_label.message}</p>}
-                </div>
-                <div>
                   <label className={labelCls}>State</label>
-                  <input {...register('state')} placeholder="WY" className={inputCls} />
+                  <select {...register('state')} className={selectCls}>
+                    <option value="">— select state —</option>
+                    {US_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
                 </div>
                 <div>
                   <label className={labelCls}>Date *</label>
