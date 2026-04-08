@@ -54,7 +54,7 @@ model Harvest {
   land_type         String?     // PUBLIC | PRIVATE | UNKNOWN
   weather           String?     // SUNNY | OVERCAST | WIND | RAIN | SNOW
   moon_phase        String?     // NEW | WAXING_CRESCENT | FIRST_QUARTER | WAXING_GIBBOUS | FULL | WANING_GIBBOUS | LAST_QUARTER | WANING_CRESCENT
-  time_of_day       String?     // MORNING | MIDDAY | EVENING | NIGHT
+  time_of_day       String?     // MORNING | MIDDAY | AFTERNOON | NIGHT
   personal_best     Boolean?    @default(false)
   harvest_success   Boolean?    @default(true)
   video_url         String?
