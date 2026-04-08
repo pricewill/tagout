@@ -142,10 +142,10 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$auth$2e$ts__$5
 ;
 const metadata = {
     title: {
-        default: "Defective Gene Club — Share Your Harvest",
+        default: "Defective Gene Club — Share Your Adventure",
         template: "%s | Defective Gene Club"
     },
-    description: "Defective Gene Club is the social platform for hunters and anglers to share harvests, track records, and connect with the outdoors community."
+    description: "Defective Gene Club is the social platform for hunters and anglers to share adventures, track records, and connect with the outdoors community."
 };
 async function RootLayout({ children }) {
     const currentUser = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$auth$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["getCurrentUser"])();

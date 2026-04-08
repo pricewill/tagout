@@ -1,7 +1,5 @@
 {
-  "/admin/invites/page": "app/admin/invites/page.js",
-  "/api/admin/invites/route": "app/api/admin/invites/route.js",
   "/feed/page": "app/feed/page.js",
-  "/invite/page": "app/invite/page.js",
+  "/login/page": "app/login/page.js",
   "/page": "app/page.js"
 }
