@@ -7,6 +7,8 @@ import { createClient } from '@/lib/supabase/server'
 const optNum = z.coerce.number().optional()
 const optStr = z.string().optional()
 const optBool = z.boolean().optional()
+const optEnum = <T extends string>(values: readonly [T, ...T[]]) =>
+  z.enum(values).optional().or(z.literal('')).transform(v => v === '' ? undefined : v as T)
 
 const createHarvestSchema = z.object({
   // required core
@@ -26,32 +28,32 @@ const createHarvestSchema = z.object({
   // general optional
   companions:      optStr,
   state:           optStr,
-  land_type:       z.enum(['PUBLIC', 'PRIVATE', 'UNKNOWN']).optional(),
-  weather:         z.enum(['SUNNY', 'OVERCAST', 'WIND', 'RAIN', 'SNOW']).optional(),
-  moon_phase:      z.enum(['NEW', 'WAXING_CRESCENT', 'FIRST_QUARTER', 'WAXING_GIBBOUS', 'FULL',
-                           'WANING_GIBBOUS', 'LAST_QUARTER', 'WANING_CRESCENT']).optional(),
-  time_of_day:     z.enum(['MORNING', 'MIDDAY', 'EVENING', 'NIGHT']).optional(),
+  land_type:       optEnum(['PUBLIC', 'PRIVATE', 'UNKNOWN'] as const),
+  weather:         optEnum(['SUNNY', 'OVERCAST', 'WIND', 'RAIN', 'SNOW'] as const),
+  moon_phase:      optEnum(['NEW', 'WAXING_CRESCENT', 'FIRST_QUARTER', 'WAXING_GIBBOUS', 'FULL',
+                            'WANING_GIBBOUS', 'LAST_QUARTER', 'WANING_CRESCENT'] as const),
+  time_of_day:     optEnum(['MORNING', 'MIDDAY', 'EVENING', 'NIGHT'] as const),
   personal_best:   optBool,
   harvest_success: optBool,
   video_url:       optStr,
 
   // hunting-specific (BIG_GAME | BIRD)
   shot_distance_yards: optNum,
-  season_type:         z.enum(['ARCHERY', 'MUZZLELOADER', 'RIFLE', 'GENERAL', 'SHOTGUN']).optional(),
-  tag_type:            z.enum(['GENERAL', 'LIMITED_ENTRY', 'OTC', 'PRIVATE']).optional(),
-  animal_age:          z.enum(['MATURE', 'YOUNG', 'UNKNOWN']).optional(),
+  season_type:         optEnum(['ARCHERY', 'MUZZLELOADER', 'RIFLE', 'GENERAL', 'SHOTGUN'] as const),
+  tag_type:            optEnum(['GENERAL', 'LIMITED_ENTRY', 'OTC', 'PRIVATE'] as const),
+  animal_age:          optEnum(['MATURE', 'YOUNG', 'UNKNOWN'] as const),
   point_count:         z.coerce.number().int().optional(),
   score:               optNum,
 
   // fishing-specific (FISH)
   fly_pattern:      optStr,
-  water_type:       z.enum(['RIVER', 'LAKE', 'RESERVOIR', 'STREAM', 'POND',
-                            'BAY_ESTUARY', 'OCEAN_OFFSHORE', 'OCEAN_FLATS']).optional(),
-  technique:        z.enum(['DRY_FLY', 'NYMPH', 'STREAMER', 'SPIN', 'BAITCAST',
-                            'TROLLING', 'ICE_FISHING', 'FLY']).optional(),
+  water_type:       optEnum(['RIVER', 'LAKE', 'RESERVOIR', 'STREAM', 'POND',
+                             'BAY_ESTUARY', 'OCEAN_OFFSHORE', 'OCEAN_FLATS'] as const),
+  technique:        optEnum(['DRY_FLY', 'NYMPH', 'STREAMER', 'SPIN', 'BAITCAST',
+                             'TROLLING', 'ICE_FISHING', 'FLY'] as const),
   catch_release:    optBool,
   fish_count:       z.coerce.number().int().optional(),
-  water_conditions: z.enum(['CLEAR', 'MURKY', 'HIGH', 'LOW']).optional(),
+  water_conditions: optEnum(['CLEAR', 'MURKY', 'HIGH', 'LOW'] as const),
 })
 
 type CreateHarvestInput = z.infer<typeof createHarvestSchema>
