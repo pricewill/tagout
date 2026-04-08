@@ -39,7 +39,6 @@ model Harvest {
   species           String
   species_type      SpeciesType
   method            String
-  location_label    String
   weight_lbs        Float?
   length_in         Float?
   caption           String?

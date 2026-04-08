@@ -11,7 +11,6 @@ interface Harvest {
   species: string
   species_type: SpeciesType
   method: string
-  location_label: string
   state?: string
   harvested_at: string
   weight_lbs?: number
@@ -248,9 +247,11 @@ export default function HarvestDetailPage() {
 
           {/* Core metadata */}
           <div className="space-y-2">
-            <MetaRow icon={PinIcon}>
-              {h.location_label}{h.state ? `, ${h.state}` : ''} · <Pill label={h.land_type ?? 'UNKNOWN'} />
-            </MetaRow>
+            {(h.state || h.land_type) && (
+              <MetaRow icon={PinIcon}>
+                {h.state ?? ''}{h.land_type ? <> · <Pill label={h.land_type} /></> : null}
+              </MetaRow>
+            )}
             <MetaRow icon={CalIcon}>
               {new Date(h.harvested_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
               {h.time_of_day && <> · <Pill label={h.time_of_day} /></>}

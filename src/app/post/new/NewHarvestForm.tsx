@@ -23,7 +23,6 @@ interface FormData {
   species: string;
   species_type: string;
   method: string;
-  location_label: string;
   state: string;
   weight_lbs: string;
   length_in: string;
@@ -63,7 +62,6 @@ export function NewHarvestForm({ userId }: { userId: string }) {
     species: "",
     species_type: "FISH",
     method: "",
-    location_label: "",
     state: "",
     weight_lbs: "",
     length_in: "",
@@ -176,7 +174,6 @@ export function NewHarvestForm({ userId }: { userId: string }) {
       fd.append("species", form.species);
       fd.append("species_type", form.species_type);
       fd.append("method", form.method);
-      fd.append("location_label", form.location_label);
       if (form.state) fd.append("state", form.state);
       if (form.weight_lbs) fd.append("weight_lbs", form.weight_lbs);
       if (form.length_in) fd.append("length_in", form.length_in);
@@ -229,7 +226,6 @@ export function NewHarvestForm({ userId }: { userId: string }) {
         form.species.trim() &&
         form.species_type &&
         form.method &&
-        form.location_label.trim() &&
         form.harvested_at
       );
     return true;
@@ -413,19 +409,6 @@ export function NewHarvestForm({ userId }: { userId: string }) {
                   <option key={m} value={m}>{m}</option>
                 ))}
               </select>
-            </div>
-
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                Location <span className="text-red-400">*</span>
-              </label>
-              <input
-                type="text"
-                value={form.location_label}
-                onChange={(e) => updateForm("location_label", e.target.value)}
-                placeholder="e.g. Lake Lanier, GA"
-                className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500"
-              />
             </div>
 
             <div>
@@ -721,7 +704,6 @@ export function NewHarvestForm({ userId }: { userId: string }) {
                 </span>
               </div>
 
-              <p className="text-slate-400 text-sm">📍 {form.location_label}</p>
 
               <div className="flex gap-4 text-sm text-slate-400">
                 {form.weight_lbs && <span>⚖️ {form.weight_lbs} lbs</span>}

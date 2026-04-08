@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Heart, MessageCircle, MapPin, Scale, Ruler } from "lucide-react";
+import { Heart, MessageCircle, Scale, Ruler } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { SpeciesBadge } from "@/components/ui/SpeciesBadge";
 import { Avatar } from "@/components/ui/Avatar";
@@ -14,7 +14,6 @@ interface HarvestCardProps {
     species: string;
     species_type: string;
     method: string;
-    location_label: string;
     weight_lbs: number | null;
     length_in: number | null;
     caption: string | null;
@@ -78,12 +77,6 @@ export function HarvestCard({ harvest, isLiked = false }: HarvestCardProps) {
 
         {/* Stats row */}
         <div className="flex flex-wrap gap-3 text-sm text-slate-400">
-          {harvest.location_label && (
-            <span className="flex items-center gap-1">
-              <MapPin className="w-3.5 h-3.5 shrink-0" />
-              {harvest.location_label}
-            </span>
-          )}
           {harvest.weight_lbs != null && (
             <span className="flex items-center gap-1">
               <Scale className="w-3.5 h-3.5 shrink-0" />
