@@ -170,20 +170,17 @@ export default function NewPostPage() {
     if (aiResult?.species_type) setValue('species_type', aiResult.species_type)
   }
 
-  const onSubmit = async (data: HarvestFormValues) => { console.log("SUBMIT CALLED", data)
+  const onSubmit = async (data: HarvestFormValues) => {
     setSubmitting(true)
     setSubmitError(null)
     try {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.push('/login')
-        return
-      }
 
       let imageUrl: string | undefined
       if (fileRef.current) {
         const file = fileRef.current
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) { router.push('/login'); return }
         const ext = file.type === 'image/png' ? 'png' : 'jpg'
         const path = `${user.id}/${Date.now()}.${ext}`
         const { error: uploadError } = await supabase.storage
@@ -197,7 +194,6 @@ export default function NewPostPage() {
       }
 
       const payload = {
-        user_id: user.id,
         ...data,
         image_url: imageUrl,
         weight_lbs: data.weight_lbs === '' ? undefined : data.weight_lbs,

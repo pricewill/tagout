@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
+import { createClient } from '@/lib/supabase/server'
 
 // ─── validation schema ────────────────────────────────────────────────────────
 const optNum = z.coerce.number().optional()
@@ -9,7 +10,6 @@ const optBool = z.boolean().optional()
 
 const createHarvestSchema = z.object({
   // required core
-  user_id:        z.string().min(1),
   species:        z.string().min(1),
   species_type:   z.enum(['FISH', 'BIG_GAME', 'BIRD', 'OTHER']),
   method:         z.string().min(1),
@@ -86,6 +86,12 @@ function sanitizeBySpeciesType(data: CreateHarvestInput): CreateHarvestInput {
 
 // ─── POST /api/harvests ───────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   let body: unknown
   try {
     body = await req.json()
@@ -104,7 +110,7 @@ export async function POST(req: NextRequest) {
   const { image_url, ...rest } = sanitizeBySpeciesType(parsed.data)
 
   const harvest = await prisma.harvest.create({
-    data: rest,
+    data: { ...rest, user_id: user.id },
   })
 
   if (image_url) {
