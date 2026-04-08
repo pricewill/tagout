@@ -13,27 +13,20 @@ export interface AIIdentifyResult {
 export async function identifySpeciesFromUrl(
   imageUrl: string
 ): Promise<AIIdentifyResult> {
-  // imageUrl may be a data URI (data:image/jpeg;base64,<data>)
-  // or a raw base64 string, or a real https URL.
+  // imageUrl may be a data URI (data:image/jpeg;base64,<data>) or raw base64.
   type MediaType = "image/jpeg" | "image/png" | "image/gif" | "image/webp";
 
-  type ImageSource =
-    | { type: "base64"; media_type: MediaType; data: string }
-    | { type: "url"; url: string };
-
-  let imageSource: ImageSource;
+  let mediaType: MediaType = "image/jpeg";
+  let data = imageUrl;
 
   if (imageUrl.startsWith("data:")) {
     // Parse "data:<mediaType>;base64,<data>"
-    const [header, data] = imageUrl.split(",");
-    const mediaType = (header.split(":")[1]?.split(";")[0] ?? "image/jpeg") as MediaType;
-    imageSource = { type: "base64", media_type: mediaType, data };
-  } else if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
-    imageSource = { type: "url", url: imageUrl };
-  } else {
-    // Assume raw base64 JPEG
-    imageSource = { type: "base64", media_type: "image/jpeg", data: imageUrl };
+    const [header, b64] = imageUrl.split(",");
+    mediaType = (header.split(":")[1]?.split(";")[0] ?? "image/jpeg") as MediaType;
+    data = b64;
   }
+
+  const imageSource = { type: "base64" as const, media_type: mediaType, data };
 
   const response = await anthropic.messages.create({
     model: "claude-sonnet-4-6",
