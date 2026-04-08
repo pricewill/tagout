@@ -140,7 +140,7 @@ export default function NewPostPage() {
       <main className="min-h-screen bg-[#0d1a0d] text-white flex items-center justify-center p-4">
         <div className="text-center space-y-4">
           <div className="text-5xl">🎯</div>
-          <h2 className="text-2xl font-bold text-[#C17F24]">Harvest Tagged!</h2>
+          <h2 className="text-2xl font-bold text-[#C17F24]">Adventure Tagged!</h2>
           <p className="text-[#8aaa8a]">Your post has been submitted (mock).</p>
           <a href="/feed" className="inline-block bg-[#C17F24] text-[#0d1a0d] px-6 py-2 rounded-full font-semibold hover:bg-[#d4912a] transition-colors">
             Back to Feed
@@ -154,7 +154,7 @@ export default function NewPostPage() {
     <main className="min-h-screen bg-[#0d1a0d] text-white">
       <header className="sticky top-0 z-10 bg-[#0d1a0d]/95 backdrop-blur border-b border-[#2D4A2D] px-4 py-3 flex items-center gap-4">
         <a href="/feed" className="text-[#8aaa8a] hover:text-white transition-colors">← Back</a>
-        <h1 className="text-lg font-semibold">New Harvest Post</h1>
+        <h1 className="text-lg font-semibold">New Adventure Post</h1>
       </header>
 
       <div className="max-w-lg mx-auto px-4 py-8">
@@ -235,7 +235,7 @@ export default function NewPostPage() {
         {/* ── STEP 1: Core Details ── */}
         {step === 1 && (
           <div className="space-y-5">
-            <h2 className="text-xl font-semibold">Harvest Details</h2>
+            <h2 className="text-xl font-semibold">Adventure Details</h2>
 
             {/* ── Species ── */}
             <div className={sectionCls}>
@@ -336,7 +336,7 @@ export default function NewPostPage() {
                 </div>
                 <div className="col-span-2 flex gap-4 pt-1">
                   <CheckboxField label="Personal best" name="personal_best" register={register} />
-                  <CheckboxField label="Successful harvest" name="harvest_success" register={register} />
+                  <CheckboxField label="Successful adventure" name="harvest_success" register={register} />
                 </div>
               </div>
             </div>
@@ -410,7 +410,7 @@ export default function NewPostPage() {
             <div>
               <label className={labelCls}>Caption (optional)</label>
               <textarea {...register('caption')} rows={4}
-                placeholder="Share the story behind this harvest…"
+                placeholder="Share the story behind this adventure…"
                 className={`${inputCls} resize-none`} />
             </div>
 

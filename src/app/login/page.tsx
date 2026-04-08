@@ -42,7 +42,7 @@ export default function LoginPage() {
             Defective Gene Club
           </h1>
           <p className="text-slate-400 text-sm mt-1">
-            Share your harvest with the world
+            Share your adventure with the world
           </p>
         </div>
 

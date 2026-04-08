@@ -104,7 +104,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
           <p className="text-slate-400 text-sm mt-0.5">
             {feedMode === "following"
               ? "Latest from hunters & anglers you follow"
-              : "Explore all recent harvests"}
+              : "Explore all recent adventures"}
           </p>
         </div>
         <Link
@@ -112,7 +112,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
           className="flex items-center gap-2 bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
         >
           <PlusCircle className="w-4 h-4" />
-          Post Harvest
+          Post Adventure
         </Link>
       </div>
 
@@ -120,14 +120,14 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
       {harvests.length === 0 ? (
         <div className="text-center py-20">
           <Fish className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-          <h2 className="text-lg font-semibold text-slate-300 mb-2">No harvests yet</h2>
+          <h2 className="text-lg font-semibold text-slate-300 mb-2">No adventures yet</h2>
           {feedMode === "following" ? (
             <p className="text-slate-500 mb-6">
-              The people you follow haven&apos;t posted any harvests yet.
+              The people you follow haven&apos;t posted any adventures yet.
             </p>
           ) : (
             <p className="text-slate-500 mb-6">
-              Be the first to share a harvest!
+              Be the first to share an adventure!
             </p>
           )}
           <Link
@@ -135,7 +135,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
             className="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-500 text-white px-5 py-2.5 rounded-lg font-semibold transition-colors"
           >
             <PlusCircle className="w-4 h-4" />
-            Post Your First Harvest
+            Post Your First Adventure
           </Link>
         </div>
       ) : (

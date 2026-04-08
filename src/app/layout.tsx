@@ -5,11 +5,11 @@ import { getCurrentUser } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: {
-    default: "Defective Gene Club — Share Your Harvest",
+    default: "Defective Gene Club — Share Your Adventure",
     template: "%s | Defective Gene Club",
   },
   description:
-    "Defective Gene Club is the social platform for hunters and anglers to share harvests, track records, and connect with the outdoors community.",
+    "Defective Gene Club is the social platform for hunters and anglers to share adventures, track records, and connect with the outdoors community.",
 };
 
 export default async function RootLayout({

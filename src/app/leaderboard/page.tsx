@@ -164,7 +164,7 @@ export default async function LeaderboardPage({ searchParams }: LeaderboardPageP
       {/* Leaderboard list */}
       {harvests.length === 0 ? (
         <div className="text-center py-16 text-slate-500">
-          No harvests match these filters yet.
+          No adventures match these filters yet.
         </div>
       ) : (
         <div className="space-y-3">

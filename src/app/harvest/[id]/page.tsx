@@ -92,7 +92,7 @@ function VideoEmbed({ url }: { url: string }) {
           className="w-full h-full"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
-          title="Harvest video"
+          title="Adventure video"
         />
       </div>
     )
@@ -164,7 +164,7 @@ export default function HarvestDetailPage() {
       <main className="min-h-screen bg-[#0d1a0d] text-white">
         <header className="sticky top-0 z-10 bg-[#0d1a0d]/95 backdrop-blur border-b border-[#2D4A2D] px-4 py-3 flex items-center gap-4">
           <a href="/feed" className="text-[#8aaa8a] hover:text-white transition-colors">← Feed</a>
-          <h1 className="text-lg font-semibold text-[#8aaa8a]">Harvest</h1>
+          <h1 className="text-lg font-semibold text-[#8aaa8a]">Adventure</h1>
         </header>
         <div className="flex flex-col items-center justify-center py-32 text-center px-4">
           <div className="h-16 w-16 rounded-full bg-[#1a2a1a] border border-[#2D4A2D] flex items-center justify-center mb-5">
@@ -172,7 +172,7 @@ export default function HarvestDetailPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h3 className="text-lg font-bold text-[#c8d8c8] mb-2">Harvest not found</h3>
+          <h3 className="text-lg font-bold text-[#c8d8c8] mb-2">Adventure not found</h3>
           <p className="text-[#6a8a6a] text-sm mb-6 max-w-xs">
             This post doesn&apos;t exist or may have been removed.
           </p>

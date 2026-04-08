@@ -210,7 +210,7 @@ export function NewHarvestForm({ userId }: { userId: string }) {
       const res = await fetch("/api/harvests", { method: "POST", body: fd });
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error ?? "Failed to create harvest");
+      if (!res.ok) throw new Error(data.error ?? "Failed to create adventure");
 
       router.push(`/harvest/${data.harvest.id}`);
     } catch (err) {
@@ -284,7 +284,7 @@ export function NewHarvestForm({ userId }: { userId: string }) {
             <input {...getInputProps()} />
             <Camera className="w-10 h-10 text-slate-500 mx-auto mb-3" />
             <p className="text-slate-300 font-medium">
-              {isDragActive ? "Drop photos here" : "Upload harvest photos"}
+              {isDragActive ? "Drop photos here" : "Upload adventure photos"}
             </p>
             <p className="text-slate-500 text-sm mt-1">
               Drag & drop or click • Up to 10 photos • JPEG, PNG, WebP, HEIC
@@ -332,7 +332,7 @@ export function NewHarvestForm({ userId }: { userId: string }) {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-slate-200">AI Species ID</p>
-                  <p className="text-xs text-slate-400">Let AI identify what you caught/harvested</p>
+                  <p className="text-xs text-slate-400">Let AI identify what you caught</p>
                 </div>
                 <Button
                   variant="secondary"
@@ -443,7 +443,7 @@ export function NewHarvestForm({ userId }: { userId: string }) {
 
             <div className="col-span-2">
               <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                Harvest Date & Time <span className="text-red-400">*</span>
+                Adventure Date & Time <span className="text-red-400">*</span>
               </label>
               <input
                 type="datetime-local"
@@ -519,7 +519,7 @@ export function NewHarvestForm({ userId }: { userId: string }) {
                   <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-300">
                     <input type="checkbox" checked={form.harvest_success} onChange={(e) => updateForm("harvest_success", e.target.checked as any)}
                       className="h-4 w-4 rounded border-slate-600 bg-slate-800 accent-amber-500" />
-                    Successful harvest
+                    Successful adventure
                   </label>
                 </div>
               </div>
@@ -660,7 +660,7 @@ export function NewHarvestForm({ userId }: { userId: string }) {
             <textarea
               value={form.caption}
               onChange={(e) => updateForm("caption", e.target.value)}
-              placeholder="Tell the story behind this harvest…"
+              placeholder="Tell the story behind this adventure…"
               rows={5}
               maxLength={2000}
               className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500 resize-none"
@@ -747,7 +747,7 @@ export function NewHarvestForm({ userId }: { userId: string }) {
           </Button>
         ) : (
           <Button onClick={handleSubmit} loading={submitting}>
-            Post Harvest
+            Post Adventure
           </Button>
         )}
       </div>

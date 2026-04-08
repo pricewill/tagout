@@ -92,7 +92,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             <div className="flex gap-6 mt-4 text-sm">
               <div>
                 <span className="font-bold text-white">{profile._count.harvests}</span>
-                <span className="text-slate-400 ml-1">Harvests</span>
+                <span className="text-slate-400 ml-1">Adventures</span>
               </div>
               <div>
                 <span className="font-bold text-white">{profile._count.followers}</span>
@@ -110,11 +110,11 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
       {/* Harvest grid */}
       <div>
         <h2 className="text-lg font-semibold text-slate-200 mb-4">
-          Harvests
+          Adventures
         </h2>
         {harvests.length === 0 ? (
           <div className="text-center py-16 text-slate-500">
-            No harvests logged yet.
+            No adventures logged yet.
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
