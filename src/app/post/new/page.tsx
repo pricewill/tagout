@@ -8,6 +8,7 @@ import { z } from 'zod'
 import { useSpeciesId } from '@/hooks/useSpeciesId'
 import { SpeciesBadge } from '@/components/SpeciesBadge'
 import { createClient } from '@/lib/supabase/client'
+import heic2any from 'heic2any'
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 const optNum = z.union([z.coerce.number().positive(), z.literal('')]).optional()
@@ -104,6 +105,7 @@ export default function NewPostPage() {
   const [aiBannerDismissed, setAiBannerDismissed] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [converting, setConverting] = useState(false)
   const fileRef = useRef<File | null>(null)
 
   const { identify, result: aiResult, loading: aiLoading } = useSpeciesId()
@@ -120,18 +122,39 @@ export default function NewPostPage() {
   const handleFileDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     const file = e.dataTransfer.files[0]
-    if (file) processFile(file)
+    if (file) void processFile(file)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) processFile(file)
+    if (file) void processFile(file)
   }
 
-  const processFile = (file: File) => {
-    if (!file.type.match(/image\/(jpeg|png)/)) return
-    fileRef.current = file
+  const processFile = async (file: File) => {
+    const isHeic = file.type === 'image/heic' || file.type === 'image/heif' ||
+      /\.(heic|heif)$/i.test(file.name)
+    const isJpegOrPng = file.type.match(/image\/(jpeg|png)/)
+    if (!isHeic && !isJpegOrPng) return
+
+    let processedFile = file
+    if (isHeic) {
+      setConverting(true)
+      try {
+        const blob = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.9 })
+        processedFile = new File(
+          [Array.isArray(blob) ? blob[0] : blob],
+          file.name.replace(/\.(heic|heif)$/i, '.jpg'),
+          { type: 'image/jpeg' }
+        )
+      } catch {
+        setConverting(false)
+        return
+      }
+      setConverting(false)
+    }
+
+    fileRef.current = processedFile
     const reader = new FileReader()
     reader.onload = (e) => {
       const dataUrl = e.target?.result as string
@@ -139,7 +162,7 @@ export default function NewPostPage() {
       setAiBannerDismissed(false)
       identify(dataUrl)
     }
-    reader.readAsDataURL(file)
+    reader.readAsDataURL(processedFile)
   }
 
   const handleAiAccept = () => {
@@ -227,6 +250,13 @@ export default function NewPostPage() {
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">Upload Photo</h2>
 
+            {converting && (
+              <div className="bg-[#1a2a1a] border border-[#2D4A2D] rounded-lg p-3 text-sm text-[#8aaa8a] flex items-center gap-2">
+                <div className="h-4 w-4 rounded-full border-2 border-[#C17F24] border-t-transparent animate-spin" />
+                Converting image…
+              </div>
+            )}
+
             {aiLoading && (
               <div className="bg-[#1a2a1a] border border-[#2D4A2D] rounded-lg p-3 text-sm text-[#8aaa8a] flex items-center gap-2">
                 <div className="h-4 w-4 rounded-full border-2 border-[#C17F24] border-t-transparent animate-spin" />
@@ -261,7 +291,7 @@ export default function NewPostPage() {
               onDragOver={(e) => e.preventDefault()}
               className="relative border-2 border-dashed border-[#2D4A2D] rounded-xl aspect-[4/3] flex items-center justify-center cursor-pointer hover:border-[#C17F24] transition-colors bg-[#0f1a0f] overflow-hidden"
             >
-              <input type="file" accept="image/jpeg,image/png" onChange={handleFileChange} className="absolute inset-0 opacity-0 cursor-pointer" />
+              <input type="file" accept="image/jpeg,image/png,image/heic,image/heif,.heic,.heif" onChange={handleFileChange} className="absolute inset-0 opacity-0 cursor-pointer" />
               {previewUrl ? (
                 <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
               ) : (
@@ -270,7 +300,7 @@ export default function NewPostPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                   <p className="text-sm font-medium">Drop your photo here</p>
-                  <p className="text-xs">or click to browse — JPG / PNG</p>
+                  <p className="text-xs">or click to browse — JPG, PNG, HEIC</p>
                 </div>
               )}
             </div>
