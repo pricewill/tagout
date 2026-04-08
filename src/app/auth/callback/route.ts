@@ -15,8 +15,8 @@ export async function GET(request: NextRequest) {
       const existing = await prisma.user.findUnique({ where: { id: user.id } });
 
       if (!existing) {
-        // New user — redirect to onboarding
-        return NextResponse.redirect(`${origin}/onboarding`);
+        // New user — require invite code before onboarding
+        return NextResponse.redirect(`${origin}/invite`);
       }
 
       return NextResponse.redirect(`${origin}/feed`);

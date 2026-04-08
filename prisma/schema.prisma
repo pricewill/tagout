@@ -140,3 +140,13 @@ model Reaction {
 
   @@unique([user_id, harvest_id, emoji])
 }
+
+model InviteCode {
+  id            String    @id @default(cuid())
+  code          String    @unique
+  created_by    String?
+  used_by_email String?
+  used_at       DateTime?
+  is_active     Boolean   @default(true)
+  created_at    DateTime  @default(now())
+}
