@@ -37,7 +37,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <span className="text-4xl">🧬</span>
+          <span className="text-4xl">🎯</span>
           <h1 className="text-2xl font-bold text-amber-400 mt-2 tracking-tight">
             Defective Gene Club
           </h1>
