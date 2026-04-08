@@ -398,7 +398,7 @@ export default function NewPostPage() {
             <div className={sectionCls}>
               <p className={sectionTitleCls}>Conditions</p>
               <div className="grid grid-cols-2 gap-3">
-                <SelectField label="Time of Day" name="time_of_day" options={['MORNING', 'MIDDAY', 'EVENING', 'NIGHT']} register={register} />
+                <SelectField label="Time of Day" name="time_of_day" options={['MORNING', 'MIDDAY', 'AFTERNOON', 'NIGHT']} register={register} />
                 <SelectField label="Weather" name="weather" options={['SUNNY', 'OVERCAST', 'WIND', 'RAIN', 'SNOW']} register={register} />
                 <SelectField label="Moon Phase" name="moon_phase"
                   options={['NEW', 'WAXING_CRESCENT', 'FIRST_QUARTER', 'WAXING_GIBBOUS', 'FULL', 'WANING_GIBBOUS', 'LAST_QUARTER', 'WANING_CRESCENT']}
