@@ -98,6 +98,20 @@ export function EditHarvestForm({ harvest }: { harvest: Harvest }) {
     str("method");
     num("weight_lbs");
     num("length_in");
+
+    // harvested_at comes in as YYYY-MM-DD; forward as ISO string so the API
+    // can coerce it to a Date.
+    const harvestedAtRaw = fd.get("harvested_at");
+    if (harvestedAtRaw !== null) {
+      const s = String(harvestedAtRaw).trim();
+      if (s !== "") {
+        const d = new Date(s);
+        if (!Number.isNaN(d.getTime())) {
+          payload.harvested_at = d.toISOString();
+        }
+      }
+    }
+
     str("companions");
     str("state");
     str("land_type");
@@ -145,14 +159,28 @@ export function EditHarvestForm({ harvest }: { harvest: Harvest }) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">
-      <div className="space-y-2">
-        <p className={label()}>Species</p>
-        <input
-          name="species"
-          defaultValue={harvest.species}
-          required
-          className={inputCls}
-        />
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <p className={label()}>Species</p>
+          <input
+            name="species"
+            defaultValue={harvest.species}
+            required
+            className={inputCls}
+          />
+        </div>
+        <div className="space-y-2">
+          <p className={label()}>Date</p>
+          <input
+            name="harvested_at"
+            type="date"
+            required
+            defaultValue={
+              new Date(harvest.harvested_at).toISOString().slice(0, 10)
+            }
+            className={`${inputCls} [color-scheme:dark]`}
+          />
+        </div>
       </div>
 
       <div className="space-y-2">
