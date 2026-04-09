@@ -71,6 +71,10 @@ export function ReactionBar({
           body: JSON.stringify({ emoji }),
         });
         if (!res.ok) throw new Error("Failed");
+        const data = (await res.json()) as { reactions?: ReactionCount[] };
+        if (data.reactions) {
+          setReactions(buildState(data.reactions));
+        }
       } catch {
         // Revert on failure
         setReactions((prev) =>

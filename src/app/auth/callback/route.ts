@@ -7,8 +7,7 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
 
   if (code) {
-    const redirectTo = `${origin}/feed`;
-    const response = NextResponse.redirect(redirectTo);
+    const response = NextResponse.redirect(`${origin}/feed`);
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -30,7 +29,25 @@ export async function GET(request: NextRequest) {
     const { data: { user }, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error && user) {
-      const existing = await prisma.user.findUnique({ where: { id: user.id } });
+      // Look up user by auth id first, then fall back to email so returning
+      // users on new devices are recognized instead of being re-onboarded.
+      let existing = await prisma.user.findUnique({ where: { id: user.id } });
+
+      if (!existing && user.email) {
+        existing = await prisma.user.findUnique({ where: { email: user.email } });
+      }
+
+      // Ensure the email is stored on the record so future lookups match.
+      if (existing && user.email && existing.email !== user.email) {
+        try {
+          await prisma.user.update({
+            where: { id: existing.id },
+            data: { email: user.email },
+          });
+        } catch (e) {
+          console.error("Failed to backfill user email:", e);
+        }
+      }
 
       if (!existing) {
         // New user — redirect to invite page (cookies already set on response)

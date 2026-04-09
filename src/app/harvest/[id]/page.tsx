@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { SpeciesBadge } from '@/components/ui/SpeciesBadge'
 import { ReactionBar } from '@/components/ReactionBar'
 import { CommentSection } from './CommentSection'
+import { OwnerActions } from './OwnerActions'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -100,6 +101,11 @@ export default async function HarvestDetailPage({ params }: PageProps) {
       <header className="sticky top-0 z-10 bg-[#0d1a0d]/95 backdrop-blur border-b border-[#2D4A2D] px-4 py-3 flex items-center gap-4">
         <a href="/feed" className="text-[#8aaa8a] hover:text-white transition-colors">← Feed</a>
         <h1 className="text-lg font-semibold">{h.species}</h1>
+        {authUser?.id === h.user_id && (
+          <div className="ml-auto">
+            <OwnerActions harvestId={h.id} />
+          </div>
+        )}
       </header>
 
       <div className="max-w-2xl mx-auto">

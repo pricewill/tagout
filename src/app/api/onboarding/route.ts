@@ -33,7 +33,13 @@ export async function POST(request: NextRequest) {
 
   const dbUser = await prisma.user.upsert({
     where: { id: user.id },
-    update: { username, display_name, home_state: home_state || null, bio: bio || null },
+    update: {
+      username,
+      display_name,
+      home_state: home_state || null,
+      bio: bio || null,
+      email: user.email ?? undefined,
+    },
     create: {
       id: user.id,
       username,
@@ -41,6 +47,7 @@ export async function POST(request: NextRequest) {
       home_state: home_state || null,
       bio: bio || null,
       avatar_url: user.user_metadata?.avatar_url ?? null,
+      email: user.email ?? null,
     },
   });
 
