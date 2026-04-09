@@ -1,4 +1,4 @@
-import { HarvestCard, HarvestCardData } from '@/components/HarvestCard'
+import { HarvestCard } from '@/components/HarvestCard'
 
 // TODO: replace with real data fetch once Supabase/Prisma is wired up:
 // const { data: harvests } = await supabase.from('harvests').select(...)
