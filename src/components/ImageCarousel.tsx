@@ -45,7 +45,7 @@ export function ImageCarousel({
   return (
     <div
       className={cn(
-        "relative overflow-hidden bg-slate-900 group",
+        "relative overflow-hidden bg-[#0a0a0a] group",
         aspectRatio === "square" && "aspect-square",
         aspectRatio === "video" && "aspect-video",
         aspectRatio === "portrait" && "aspect-[3/4]",
@@ -64,7 +64,7 @@ export function ImageCarousel({
             src={img.url}
             alt={img.alt ?? `Photo ${i + 1}`}
             fill
-            className="object-cover"
+            className="object-contain"
             sizes="(max-width: 768px) 100vw, 50vw"
             priority={i === 0}
           />

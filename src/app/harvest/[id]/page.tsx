@@ -111,8 +111,8 @@ export default async function HarvestDetailPage({ params }: PageProps) {
       <div className="max-w-2xl mx-auto">
         {/* Hero image */}
         {primaryImage && (
-          <div className="relative aspect-[4/3] bg-[#0f1a0f]">
-            <img src={primaryImage.url} alt={h.species} className="w-full h-full object-cover" />
+          <div className="relative aspect-[4/3] bg-[#0a0a0a]">
+            <img src={primaryImage.url} alt={h.species} className="w-full h-full object-contain" />
             <div className="absolute top-3 left-3 flex gap-2 flex-wrap">
               {h.personal_best && (
                 <span className="bg-[#C17F24] text-[#0d1a0d] text-xs font-bold px-2.5 py-0.5 rounded-full">⭐ PB</span>
