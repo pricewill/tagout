@@ -1,15 +1,14 @@
-import { prisma } from "@/lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
-import { FeedInfiniteScroll } from "@/components/FeedInfiniteScroll";
-import Link from "next/link";
-import { Fish, PlusCircle } from "lucide-react";
-import type { ReactionCount } from "@/components/ReactionBar";
 
 const PAGE_SIZE = 12;
 
-export default async function FeedPage() {
-  // Resolve the current logged-in user via Supabase, then map to our Prisma user row.
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const offset = Math.max(0, parseInt(searchParams.get("offset") ?? "0", 10));
+
   const supabase = await createClient();
   const {
     data: { user: authUser },
@@ -22,7 +21,6 @@ export default async function FeedPage() {
       })
     : null;
 
-  // Collect the IDs of users that the current viewer follows (if any).
   let followingIds: string[] = [];
   if (currentUser) {
     const following = await prisma.follow.findMany({
@@ -32,8 +30,6 @@ export default async function FeedPage() {
     followingIds = following.map((f) => f.following_id);
   }
 
-  // Fetch the first page of harvest IDs ordered so that followed users come first,
-  // and within each group the newest posts come first.
   const orderedIdRows =
     followingIds.length > 0
       ? await prisma.$queryRaw<{ id: string }[]>(Prisma.sql`
@@ -41,11 +37,11 @@ export default async function FeedPage() {
           ORDER BY
             CASE WHEN user_id IN (${Prisma.join(followingIds)}) THEN 0 ELSE 1 END,
             created_at DESC
-          LIMIT ${PAGE_SIZE} OFFSET 0
+          LIMIT ${PAGE_SIZE} OFFSET ${offset}
         `)
       : await prisma.harvest.findMany({
           orderBy: { created_at: "desc" },
-          skip: 0,
+          skip: offset,
           take: PAGE_SIZE,
           select: { id: true },
         });
@@ -78,13 +74,11 @@ export default async function FeedPage() {
     prisma.harvest.count(),
   ]);
 
-  // Preserve the ranked order from the ID query.
   const orderIndex = new Map(pageHarvestIds.map((id, i) => [id, i] as const));
   const harvests = [...harvestsUnordered].sort(
     (a, b) => (orderIndex.get(a.id) ?? 0) - (orderIndex.get(b.id) ?? 0)
   );
 
-  // Fetch reaction counts + the current user's reactions for this page.
   const [reactionCounts, userReactions] = await Promise.all([
     harvests.length > 0
       ? prisma.reaction.groupBy({
@@ -101,7 +95,10 @@ export default async function FeedPage() {
         ),
     authUser && harvests.length > 0
       ? prisma.reaction.findMany({
-          where: { user_id: authUser.id, harvest_id: { in: pageHarvestIds } },
+          where: {
+            user_id: authUser.id,
+            harvest_id: { in: pageHarvestIds },
+          },
           select: { harvest_id: true, emoji: true },
         })
       : Promise.resolve([] as Array<{ harvest_id: string; emoji: string }>),
@@ -111,7 +108,10 @@ export default async function FeedPage() {
     userReactions.map((r) => `${r.harvest_id}:${r.emoji}`)
   );
 
-  const reactionsByHarvest: Record<string, ReactionCount[]> = {};
+  const reactionsByHarvest: Record<
+    string,
+    Array<{ emoji: string; count: number; userReacted: boolean }>
+  > = {};
   for (const row of reactionCounts) {
     const list = reactionsByHarvest[row.harvest_id] ?? [];
     list.push({
@@ -122,68 +122,10 @@ export default async function FeedPage() {
     reactionsByHarvest[row.harvest_id] = list;
   }
 
-  const hasMore = PAGE_SIZE < total;
-
-  // Serialize dates for client component
-  const serializedHarvests = harvests.map((h) => ({
-    ...h,
-    harvested_at:
-      h.harvested_at instanceof Date
-        ? h.harvested_at.toISOString()
-        : String(h.harvested_at),
-    created_at:
-      h.created_at instanceof Date
-        ? h.created_at.toISOString()
-        : String(h.created_at),
-  }));
-
-  return (
-    <main className="max-w-5xl mx-auto px-4 py-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Discover</h1>
-          <p className="text-slate-400 text-sm mt-0.5">
-            {followingIds.length > 0
-              ? "Latest adventures — people you follow first"
-              : "Explore all recent adventures"}
-          </p>
-        </div>
-        <Link
-          href="/post/new"
-          className="flex items-center gap-2 bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
-        >
-          <PlusCircle className="w-4 h-4" />
-          Post Adventure
-        </Link>
-      </div>
-
-      {/* Feed */}
-      {harvests.length === 0 ? (
-        <div className="text-center py-20">
-          <Fish className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-          <h2 className="text-lg font-semibold text-slate-300 mb-2">
-            No adventures yet
-          </h2>
-          <p className="text-slate-500 mb-6">
-            Be the first to share an adventure!
-          </p>
-          <Link
-            href="/post/new"
-            className="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-500 text-white px-5 py-2.5 rounded-lg font-semibold transition-colors"
-          >
-            <PlusCircle className="w-4 h-4" />
-            Post Your First Adventure
-          </Link>
-        </div>
-      ) : (
-        <FeedInfiniteScroll
-          initialHarvests={serializedHarvests}
-          initialReactions={reactionsByHarvest}
-          initialHasMore={hasMore}
-          currentUserId={authUser?.id}
-        />
-      )}
-    </main>
-  );
+  return NextResponse.json({
+    harvests,
+    reactions: reactionsByHarvest,
+    total,
+    hasMore: offset + PAGE_SIZE < total,
+  });
 }
